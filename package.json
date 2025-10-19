@@ -8,10 +8,10 @@
   "type": "module",
   "main": "dist/server.js",
   "scripts": {
-  "build": "npm run build:backend && npm run build:frontend && npm run copy:static && npm run inject-version",
+    "build": "npm run build:backend && npm run build:frontend && npm run copy:static && npm run inject-version",
     "build:backend": "tsc -p tsconfig.json",
     "build:frontend": "node scripts/build-frontend.cjs",
-    "copy:static": "mkdir -p dist/public && cp public/vocab.html public/style.css dist/public/",
+    "copy:static": "mkdir -p dist/public && cp src/public/vocab.html src/public/style.css dist/public/",
     "inject-version": "node scripts/inject-version.js",
     "start": "npm run build && node dist/server.js",
     "init-db": "npm run build:backend && node dist/init-db.js",
@@ -32,12 +32,12 @@
     "winston": "^3.18.3"
   },
   "devDependencies": {
-    "esbuild": "^0.19.0",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
     "@types/node": "^24.7.2",
     "@typescript-eslint/eslint-plugin": "^8.46.1",
     "@typescript-eslint/parser": "^8.46.1",
+    "esbuild": "^0.25.11",
     "eslint": "^9.37.0",
     "typescript": "^5.9.3"
   }
