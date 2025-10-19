@@ -8,9 +8,9 @@
   "type": "module",
   "main": "dist/server.js",
   "scripts": {
-    "build": "npm run build:backend && npm run build:frontend && npm run copy:static && npm run inject-version",
+  "build": "npm run build:backend && npm run build:frontend && npm run copy:static && npm run inject-version",
     "build:backend": "tsc -p tsconfig.json",
-    "build:frontend": "tsc -p src/public/tsconfig.json",
+    "build:frontend": "node scripts/build-frontend.cjs",
     "copy:static": "mkdir -p dist/public && cp public/vocab.html public/style.css dist/public/",
     "inject-version": "node scripts/inject-version.js",
     "start": "npm run build && node dist/server.js",
@@ -32,6 +32,7 @@
     "winston": "^3.18.3"
   },
   "devDependencies": {
+    "esbuild": "^0.19.0",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.3",
     "@types/node": "^24.7.2",

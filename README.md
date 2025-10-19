@@ -83,7 +83,7 @@ The app will be running at `http://localhost:3000`.
 ```bash
 npm run build              # Compiles backend + frontend + copies static files
 npm run build:backend      # Backend only (src/ → dist/)
-npm run build:frontend     # Frontend only (src/public/script.ts → dist/public/script.js)
+npm run build:frontend     # Frontend only (src/public → dist/public/main.js via esbuild)
 npm run copy:static        # Copies HTML/CSS to dist/public/
 ```
 
@@ -467,8 +467,8 @@ vocab-trainer/
 │   │   ├── routes/
 │   │   └── utils/
 │   └── public/                  # Compiled frontend files
-│       ├── script.js            # Compiled frontend JS
-│       ├── script.js.map        # Source map
+│       ├── main.js              # Compiled frontend bundle (esbuild)
+│       ├── main.js.map          # Source map
 │       ├── vocab.html           # HTML (copied)
 │       └── style.css            # CSS (copied)
 ├── logs/                        # Log files (production only)

@@ -14,7 +14,7 @@
     <!-- Lesson-Auswahl -->
     <div id="lessonSelector">
       <label for="lessonSelect">📚 Lektion:</label>
-      <select id="lessonSelect" onchange="switchLesson()">
+  <select id="lessonSelect">
         <option value="lesson01">Lektion 1</option>
         <option value="lesson02">Lektion 2</option>
         <option value="lesson03">Lektion 3</option>
@@ -24,7 +24,7 @@
 
     <!-- Ausklappbares Formular zum Hinzufügen neuer Vokabeln -->
     <div id="addVocabContainer">
-      <div id="addVocabToggle" onclick="toggleAddForm()">
+  <div id="addVocabToggle">
         <span>➕ Neues Vokabelpaar</span>
       </div>
       <form id="addForm" class="form-hidden">
@@ -47,6 +47,6 @@
 
   <canvas id="confetti"></canvas>
 
-  <script src="script.js?v={{VERSION}}"></script>
+  <script type="module" src="main.js?v={{VERSION}}"></script>
 </body>
 </html>
