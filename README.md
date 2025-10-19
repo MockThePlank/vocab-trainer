@@ -79,18 +79,34 @@ The app will be running at `http://localhost:3000`.
 
 ### Development Workflow
 
-**Compile TypeScript**:
+**Frontend Development (Vite)**:
 ```bash
-npm run build              # Compiles backend + frontend + copies static files
-npm run build:backend      # Backend only (src/ → dist/)
-npm run build:frontend     # Frontend only (src/public → dist/public/main.js via esbuild)
-npm run copy:static        # Copies HTML/CSS to dist/public/
+npm run dev:frontend   # Starts Vite dev server on http://localhost:5173 (HMR, TS)
 ```
 
-**Watch mode for development**:
+**Backend Development (TypeScript watch)**:
 ```bash
-npm run dev                # Backend watch mode
-npm run dev:frontend       # Frontend watch mode (requires separate terminal)
+npm run dev:backend    # Watches backend sources and recompiles to dist/
+```
+
+**Combined Dev (parallel)**:
+```bash
+npm run dev           # Runs backend watch + Vite dev (uses concurrently)
+```
+
+**Production Build**:
+```bash
+npm run build         # Backend compile (tsc) + Vite build (frontend) + version injection
+```
+
+**Backend Only Build**:
+```bash
+npm run build:backend
+```
+
+**Frontend Only Build (Vite)**:
+```bash
+npm run build:frontend
 ```
 
 **Code linting**:
@@ -106,11 +122,11 @@ npm start
 ```
 
 **Important notes**:
-- All compiled files go to `dist/`
-- The Express server serves from `dist/public/`
-- Frontend TypeScript is compiled with a separate `tsconfig.json` (`src/public/tsconfig.json`) including DOM types
-- `public/` contains only source files (HTML, CSS)
-- If you change HTML/CSS: run `npm run copy:static`
+- Backend output lives in `dist/` (e.g. `dist/server.js`)
+- Vite outputs frontend assets to `dist/public/` (HTML + `assets/` folder)
+- Frontend source lives in `src/public` (HTML, CSS, TypeScript modules)
+- Version placeholder `{{VERSION}}` is injected into `dist/public/vocab.html` during build
+- No manual copy step needed; Vite handles bundling.
 
 ---
 

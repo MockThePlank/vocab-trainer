@@ -27,6 +27,34 @@ const db = new sqlite3.Database(DB_PATH, (err) => {
   logger.info('Database connected for initialization', { path: DB_PATH });
 });
 
+// Safe close helper to avoid calling db.close() multiple times
+let dbClosed = false;
+function safeClose(callback?: () => void) {
+  if (dbClosed || !db) {
+    if (callback) callback();
+    return;
+  }
+  dbClosed = true;
+  try {
+    db.close((err) => {
+      if (err) {
+        // Treat SQLITE_MISUSE / already closed as non-fatal during init
+        if (/SQLITE_MISUSE|closed/i.test(String(err.message))) {
+          logger.warn('Database handle already closed during init', { error: err.message });
+        } else {
+          logger.error('Failed to close database', { error: err.message });
+        }
+      } else {
+        logger.info('Database connection closed');
+      }
+      if (callback) callback();
+    });
+  } catch (e: any) {
+    logger.warn('Exception during database close', { error: e?.message ?? String(e) });
+    if (callback) callback();
+  }
+}
+
 // Interface für Vokabel-Daten
 interface VocabPair {
   de: string;
@@ -90,13 +118,13 @@ db.serialize(() => {
       db.get('SELECT COUNT(*) as count FROM vocabulary', (err, row: { count: number } | undefined) => {
         if (err) {
           logger.error('Failed to check table contents', { error: err.message });
-          db.close(() => logger.info('Database connection closed'));
+          safeClose(() => logger.info('Database connection closed'));
           return;
         }
 
         if (row && row.count > 0) {
           logger.info('Migration skipped - table already contains data', { rowCount: row.count });
-          db.close(() => logger.info('Database connection closed'));
+          safeClose(() => logger.info('Database connection closed'));
           return;
         }
 
@@ -130,13 +158,7 @@ db.serialize(() => {
             } else {
               logger.info('Migration completed', { totalVocabulary: row?.count || 0 });
             }
-            db.close((err) => {
-              if (err) {
-                logger.error('Failed to close database', { error: err.message });
-              } else {
-                logger.info('Database connection closed');
-              }
-            });
+                safeClose();
           });
         });
       });
