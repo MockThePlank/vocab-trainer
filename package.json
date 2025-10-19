@@ -1,23 +1,23 @@
 {
   "name": "vocab-trainer",
   "author": {
-    "name": "CodeBeard"
+    "name": "MockThePlank"
   },
-  "version": "2.1.0",
-  "description": "Ein spielerischer Vokabeltrainer Backend und Konfetti.",
+  "version": "2.0.0",
+  "description": "Ein spielerischer Vokabeltrainer mit Express-Backend und Konfetti.",
   "type": "module",
   "main": "dist/server.js",
   "scripts": {
-    "build": "npm run build:backend && npm run copy:static && npm run inject-version",
+    "build": "npm run build:backend && npm run build:frontend && npm run copy:static && npm run inject-version",
     "build:backend": "tsc -p tsconfig.json",
+    "build:frontend": "node scripts/build-frontend.cjs",
     "copy:static": "mkdir -p dist/public && cp src/public/vocab.html src/public/style.css dist/public/",
     "inject-version": "node scripts/inject-version.js",
     "start": "npm run build && node dist/server.js",
     "init-db": "npm run build:backend && node dist/init-db.js",
     "deploy": "npm run build && node dist/init-db.js && node dist/server.js",
-    "dev": "vite",
-    "build:frontend": "vite build",
-    "preview": "vite preview",
+    "dev": "tsc --watch",
+    "dev:frontend": "tsc -p src/public/tsconfig.json --watch",
     "lint": "eslint \"**/*.ts\" --ext .ts",
     "lint:fix": "eslint \"**/*.ts\" --ext .ts --fix"
   },
@@ -37,8 +37,7 @@
     "@types/node": "^24.7.2",
     "@typescript-eslint/eslint-plugin": "^8.46.1",
     "@typescript-eslint/parser": "^8.46.1",
-  "esbuild": "^0.25.11",
-  "vite": "^5.1.0",
+    "esbuild": "^0.25.11",
     "eslint": "^9.37.0",
     "typescript": "^5.9.3"
   }
