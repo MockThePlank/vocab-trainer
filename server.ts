@@ -42,7 +42,8 @@ app.use(
 );
 
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
+// Serve static files from Vite build output (dist) in production
+app.use(express.static(path.join(__dirname, '..', 'dist')));
 
 // CORS aktivieren
 app.use(cors());
