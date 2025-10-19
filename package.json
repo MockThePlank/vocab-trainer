@@ -8,16 +8,16 @@
   "type": "module",
   "main": "dist/server.js",
   "scripts": {
-  "build": "npm run build:backend && npm run build:frontend && npm run copy:static && npm run inject-version",
-  "build:backend": "tsc -p tsconfig.json",
-  "build:frontend": "vite build",
-  "copy:static": "mkdir -p dist/public && cp dist/vocab.html dist/public/vocab.html && cp -r dist/assets dist/public/ || true",
-  "inject-version": "node scripts/inject-version.js",
-  "start": "npm run build:backend && npm run build:frontend && npm run inject-version && node dist/server.js",
+    "build": "npm run build:backend && npm run build:frontend && npm run copy:static && npm run inject-version",
+    "build:backend": "tsc -p tsconfig.json",
+    "build:frontend": "vite build",
+    "copy:static": "mkdir -p dist/public && cp dist/vocab.html dist/public/vocab.html && cp -r dist/assets dist/public/ || true",
+    "inject-version": "node scripts/inject-version.js",
+    "start": "npm run build:backend && npm run build:frontend && npm run inject-version && node dist/server.js",
     "init-db": "npm run build:backend && node dist/init-db.js",
     "deploy": "npm run build && node dist/init-db.js && node dist/server.js",
-  "dev": "vite",
-  "dev:frontend": "vite",
+    "dev": "vite",
+    "dev:frontend": "vite",
     "lint": "eslint \"**/*.ts\" --ext .ts",
     "lint:fix": "eslint \"**/*.ts\" --ext .ts --fix"
   },
@@ -39,6 +39,7 @@
     "@typescript-eslint/parser": "^8.46.1",
     "esbuild": "^0.25.11",
     "eslint": "^9.37.0",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vite": "^5.4.20"
   }
 }
