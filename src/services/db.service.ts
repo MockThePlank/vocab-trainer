@@ -18,7 +18,8 @@ const __dirname = path.dirname(__filename);
  * Implements CRUD operations for vocabulary entries
  */
 class DatabaseService {
-  private db: sqlite3.Database;
+  private db: sqlite3.Database | null = null;
+  private closing = false;
 
   /**
    * Creates a new DatabaseService instance and establishes SQLite connection
@@ -45,6 +46,11 @@ class DatabaseService {
    */
   getVocabByLesson(lesson: Lesson): Promise<VocabEntry[]> {
     return new Promise((resolve, reject) => {
+      if (!this.db) {
+        const msg = 'Database is closed';
+        logDbError('getVocabByLesson', new Error(msg));
+        return reject(new Error(msg));
+      }
       this.db.all(
         'SELECT id, lesson, de, en, created_at FROM vocabulary WHERE lesson = ? ORDER BY created_at ASC',
         [lesson],
@@ -71,6 +77,7 @@ class DatabaseService {
    */
   addVocab(lesson: Lesson, de: string, en: string): Promise<number> {
     return new Promise((resolve, reject) => {
+      if (!this.db) return reject(new Error('Database is closed'));
       this.db.run(
         'INSERT INTO vocabulary (lesson, de, en) VALUES (?, ?, ?)',
         [lesson, de, en],
@@ -95,6 +102,7 @@ class DatabaseService {
    */
   deleteVocab(id: number): Promise<number> {
     return new Promise((resolve, reject) => {
+      if (!this.db) return reject(new Error('Database is closed'));
       this.db.run('DELETE FROM vocabulary WHERE id = ?', [id], function (err) {
         if (err) {
           logDbError('deleteVocab', err);
@@ -117,6 +125,7 @@ class DatabaseService {
    */
   updateVocab(id: number, de: string, en: string): Promise<number> {
     return new Promise((resolve, reject) => {
+      if (!this.db) return reject(new Error('Database is closed'));
       this.db.run(
         'UPDATE vocabulary SET de = ?, en = ? WHERE id = ?',
         [de, en, id],
@@ -140,16 +149,39 @@ class DatabaseService {
    * @throws Database error if close fails
    */
   close(): Promise<void> {
-    return new Promise((resolve, reject) => {
-      this.db.close((err) => {
-        if (err) {
-          logger.error('Failed to close database', { error: err.message });
-          reject(err);
-        } else {
-          logger.info('Database connection closed');
+    return new Promise((resolve) => {
+      // Idempotent close: if already closing or closed, resolve immediately
+      if (this.closing) return resolve();
+      this.closing = true;
+      if (!this.db) {
+        logger.info('Database already closed');
+        this.closing = false;
+        return resolve();
+      }
+
+      try {
+        this.db.close((err) => {
+          if (err) {
+            // Treat SQLITE_MISUSE (already closed) as non-fatal for shutdown
+            if (err && /SQLITE_MISUSE|closed/i.test(String(err.message))) {
+              logger.warn('Database handle already closed during shutdown', { error: err.message });
+            } else {
+              logger.error('Failed to close database', { error: err.message });
+            }
+          } else {
+            logger.info('Database connection closed');
+          }
+          this.db = null;
+          this.closing = false;
           resolve();
-        }
-      });
+        });
+      } catch (e: any) {
+        // If the close throws synchronously, log and continue shutdown
+        logger.warn('Exception during database close', { error: e?.message ?? String(e) });
+        this.db = null;
+        this.closing = false;
+        resolve();
+      }
     });
   }
 }

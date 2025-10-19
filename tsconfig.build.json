@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.json",
+  "exclude": [
+    "vite.config.ts",
+    "src/public",
+    "public",
+    "dist",
+    "node_modules"
+  ]
+}

@@ -17,25 +17,17 @@ const projectRoot = join(__dirname, '..');
 const packageJson = JSON.parse(readFileSync(join(projectRoot, 'package.json'), 'utf-8'));
 const version = packageJson.version;
 
-console.log(`📦 Injecting version ${version} into HTML files...`);
+console.log(`📦 Injecting version ${version} into dist/public/vocab.html...`);
 
-// Files to process
-const files = [
-  join(projectRoot, 'dist/public/vocab.html'),
-];
+const target = join(projectRoot, 'dist', 'public', 'vocab.html');
 
-files.forEach(filePath => {
-  try {
-    let content = readFileSync(filePath, 'utf-8');
-    
-    // Replace {{VERSION}} placeholder with actual version
-    content = content.replace(/\{\{VERSION\}\}/g, version);
-    
-    writeFileSync(filePath, content, 'utf-8');
-    console.log(`✅ Updated: ${filePath}`);
-  } catch (error) {
-    console.error(`❌ Failed to update ${filePath}:`, error.message);
-  }
-});
+try {
+  let content = readFileSync(target, 'utf-8');
+  content = content.replace(/\{\{VERSION\}\}/g, version);
+  writeFileSync(target, content, 'utf-8');
+  console.log(`✅ Updated: ${target}`);
+} catch (error) {
+  console.error(`❌ Failed to update ${target}:`, error.message);
+}
 
 console.log('✨ Version injection complete!');
