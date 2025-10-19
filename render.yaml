@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: fias-vokabeltrainer
+    runtime: node
+    buildCommand: npm install
+    startCommand: npm run deploy
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DB_PATH
+        value: /data/vocab.db
+      - key: ADMIN_API_KEY
+        sync: false  # Must be set manually in Render dashboard for security
+    disk:
+      name: vocab-data
+      mountPath: /data
+      sizeGB: 1

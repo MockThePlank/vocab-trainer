@@ -1,0 +1,42 @@
+{
+  "name": "vocab-trainer",
+  "author": {
+    "name": "MockThePlank"
+  },
+  "version": "1.0.0",
+  "description": "Ein spielerischer Vokabeltrainer mit Express-Backend und Konfetti.",
+  "type": "module",
+  "main": "dist/server.js",
+  "scripts": {
+    "build": "npm run build:backend && npm run build:frontend && npm run copy:static",
+    "build:backend": "tsc -p tsconfig.json",
+    "build:frontend": "tsc -p src/public/tsconfig.json",
+    "copy:static": "mkdir -p dist/public && cp public/vocab.html public/style.css dist/public/",
+    "start": "npm run build && node dist/server.js",
+    "init-db": "npm run build:backend && node dist/init-db.js",
+    "deploy": "npm run build && node dist/init-db.js && node dist/server.js",
+    "dev": "tsc --watch",
+    "dev:frontend": "tsc -p src/public/tsconfig.json --watch",
+    "lint": "eslint \"**/*.ts\" --ext .ts",
+    "lint:fix": "eslint \"**/*.ts\" --ext .ts --fix"
+  },
+  "dependencies": {
+    "@types/helmet": "^0.0.48",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^4.18.2",
+    "express-rate-limit": "^8.1.0",
+    "helmet": "^8.1.0",
+    "sqlite3": "^5.1.7",
+    "winston": "^3.18.3"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.3",
+    "@types/node": "^24.7.2",
+    "@typescript-eslint/eslint-plugin": "^8.46.1",
+    "@typescript-eslint/parser": "^8.46.1",
+    "eslint": "^9.37.0",
+    "typescript": "^5.9.3"
+  }
+}

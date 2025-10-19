@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <title>Fias Vokabeltrainer</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='48' fill='%2300aaff'/><text x='50' y='50' text-anchor='middle' dominant-baseline='central' font-size='60'>🐾</text></svg>">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>🎓 Finde die passenden Vokabeln!</h1>
+
+  <!-- Toolbar: Lesson-Selector und Vokabel-Formular nebeneinander -->
+  <div id="toolbar">
+    <!-- Lesson-Auswahl -->
+    <div id="lessonSelector">
+      <label for="lessonSelect">📚 Lektion:</label>
+      <select id="lessonSelect" onchange="switchLesson()">
+        <option value="lesson01">Lektion 1</option>
+        <option value="lesson02">Lektion 2</option>
+        <option value="lesson03">Lektion 3</option>
+        <option value="lesson04">Lektion 4</option>
+      </select>
+    </div>
+
+    <!-- Ausklappbares Formular zum Hinzufügen neuer Vokabeln -->
+    <div id="addVocabContainer">
+      <div id="addVocabToggle" onclick="toggleAddForm()">
+        <span>➕ Neues Vokabelpaar</span>
+      </div>
+      <form id="addForm" class="form-hidden">
+        <input type="text" id="de" placeholder="Deutsch" maxlength="60" required>
+        <input type="text" id="en" placeholder="Englisch" maxlength="60" required>
+        <button type="submit">Hinzufügen</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Spielbereich -->
+  <div id="container">
+    <div id="german" class="column">
+      <h3>🇩🇪 Deutsch</h3>
+    </div>
+    <div id="english" class="column">
+      <h3>🇬🇧 English</h3>
+    </div>
+  </div>
+
+  <canvas id="confetti"></canvas>
+
+  <script src="script.js?v=2.0.1"></script>
+</body>
+</html>

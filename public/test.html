@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>API Test</title>
+</head>
+<body>
+  <h1>API Test</h1>
+  <button onclick="testAPI()">Test alle Lessons</button>
+  <pre id="output"></pre>
+  
+  <script>
+    async function testAPI() {
+      const output = document.getElementById('output');
+      output.textContent = 'Loading...\n';
+      
+      for (let i = 1; i <= 4; i++) {
+        const lesson = `lesson0${i}`;
+        try {
+          const res = await fetch(`/api/vocab/${lesson}`);
+          const data = await res.json();
+          output.textContent += `\n${lesson}: ${data.length} Vokabeln\n`;
+          output.textContent += JSON.stringify(data.slice(0, 2), null, 2) + '\n';
+        } catch (e) {
+          output.textContent += `\n${lesson}: ERROR - ${e}\n`;
+        }
+      }
+    }
+  </script>
+</body>
+</html>
