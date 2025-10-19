@@ -64,7 +64,7 @@ router.put('/vocab/:id', requireApiKey, async (req: Request, res: Response<ApiRe
     return res.status(400).json({ error: 'Ungültige ID' });
   }
 
-  const { de, en } = req.body;
+  const { de, en } = req.body as { de?: unknown; en?: unknown };
 
   // Validate input
   if (typeof de !== 'string' || typeof en !== 'string') {

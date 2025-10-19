@@ -6,6 +6,7 @@ export default [
   eslint.configs.recommended,
   {
     files: ['**/*.ts'],
+    ignores: ['src/public/**/*.ts'], // Ignore frontend TypeScript (different tsconfig)
     languageOptions: {
       parser: tsparser,
       parserOptions: {
@@ -39,6 +40,6 @@ export default [
     }
   },
   {
-    ignores: ['dist/', 'node_modules/']
+    ignores: ['dist/', 'node_modules/', 'src/public/']
   }
 ];

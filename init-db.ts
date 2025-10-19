@@ -112,7 +112,7 @@ db.serialize(() => {
           
           if (fs.existsSync(jsonPath)) {
             const rawData = fs.readFileSync(jsonPath, 'utf-8');
-            const data: VocabPair[] = JSON.parse(rawData);
+            const data = JSON.parse(rawData) as VocabPair[];
             data.forEach(pair => {
               stmt.run(lesson, pair.de, pair.en, (err: Error | null) => {
                 if (err) logger.error('Migration error', { lesson, error: err.message });
