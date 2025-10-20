@@ -8,6 +8,7 @@ import dotenv from 'dotenv';
 import vocabRoutes from './src/routes/vocab.routes.js';
 import adminRoutes from './src/routes/admin.routes.js';
 import { dbService } from './src/services/db.service.js';
+import { ensureDbInitialized } from './src/utils/init-db-runner.js';
 import { ApiResponse } from './src/types/index.js';
 import { logger } from './src/utils/logger.js';
 
@@ -70,20 +71,21 @@ app.use('/api/vocab', vocabRoutes);
 app.use('/api/admin', adminRoutes);
 
 // Serve Vite build output (frontend)
-const frontendPath = path.join(__dirname, 'frontend'); // relativ zu dist/
+const frontendPath = path.join(__dirname, 'frontend'); // dist/frontend
 app.use(express.static(frontendPath));
 
+// Health Check Endpoint für Render (must be reachable before SPA fallback)
+app.get('/health', (req: Request, res: Response<ApiResponse>) => {
+  res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// SPA fallback: serve index.html for non-API routes
 app.get('*', (req, res) => {
   if (!req.path.startsWith('/api')) {
     res.sendFile(path.join(frontendPath, 'index.html'));
   } else {
     res.status(404).send('API route not found');
   }
-});
-
-// Health Check Endpoint für Render
-app.get('/health', (req: Request, res: Response<ApiResponse>) => {
-  res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
 // Graceful Shutdown
@@ -112,12 +114,28 @@ process.on('SIGTERM', () => {
 const PORT = parseInt(process.env.PORT || '3000', 10);
 const HOST = '0.0.0.0'; // Wichtig für Render!
 
-app.listen(PORT, HOST, () => {
-  logger.info('Vocab Trainer started', {
-    port: PORT,
-    host: HOST,
-    appUrl: `http://${HOST}:${PORT}/index.html`,
-    healthUrl: `http://${HOST}:${PORT}/health`,
-    environment: process.env.NODE_ENV || 'development',
-  });
-});
+async function start() {
+  try {
+    // Auto-initialize DB on production start so Render deploys work without extra steps
+    if (process.env.NODE_ENV === 'production') {
+      logger.info('Running DB initialization (production)');
+      await ensureDbInitialized();
+    }
+
+    app.listen(PORT, HOST, () => {
+      logger.info('Vocab Trainer started', {
+        port: PORT,
+        host: HOST,
+        appUrl: `http://${HOST}:${PORT}/index.html`,
+        healthUrl: `http://${HOST}:${PORT}/health`,
+        environment: process.env.NODE_ENV || 'development',
+      });
+    });
+  } catch (e: unknown) {
+    const errMsg = e instanceof Error ? e.message : String(e);
+    logger.error('Failed to initialize DB on start', { error: errMsg });
+    process.exit(1);
+  }
+}
+
+void start();
