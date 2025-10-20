@@ -42,8 +42,6 @@ app.use(
 );
 
 app.use(express.json());
-// Serve static files from Vite build output (dist/public)
-app.use(express.static(path.join(__dirname, '..', 'dist', 'public')));
 
 // CORS aktivieren
 app.use(cors());
@@ -70,6 +68,19 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 // Routes
 app.use('/api/vocab', vocabRoutes);
 app.use('/api/admin', adminRoutes);
+
+// Serve Vite build output (frontend)
+const frontendPath = path.join(__dirname, 'public');
+app.use(express.static(frontendPath));
+
+// SPA fallback: serve index.html for all non-API routes
+app.get('*', (req: Request, res: Response) => {
+  if (!req.path.startsWith('/api')) {
+    res.sendFile(path.join(frontendPath, 'index.html'));
+  } else {
+    res.status(404).send('API route not found');
+  }
+});
 
 // Health Check Endpoint für Render
 app.get('/health', (req: Request, res: Response<ApiResponse>) => {
