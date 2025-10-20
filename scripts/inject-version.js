@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Injects the version from package.json into HTML files
+ * Injects the version from package.json into HTML file
  * Replaces {{VERSION}} placeholder with actual version number
  */
 
@@ -17,9 +17,9 @@ const projectRoot = join(__dirname, '..');
 const packageJson = JSON.parse(readFileSync(join(projectRoot, 'package.json'), 'utf-8'));
 const version = packageJson.version;
 
-console.log(`📦 Injecting version ${version} into dist/public/vocab.html...`);
+const target = join(projectRoot, 'dist', 'frontend', 'index.html');
 
-const target = join(projectRoot, 'dist', 'public', 'vocab.html');
+console.log(`📦 Injecting version ${version} into ${target}...`);
 
 try {
   let content = readFileSync(target, 'utf-8');

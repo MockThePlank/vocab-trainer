@@ -70,11 +70,10 @@ app.use('/api/vocab', vocabRoutes);
 app.use('/api/admin', adminRoutes);
 
 // Serve Vite build output (frontend)
-const frontendPath = path.join(__dirname, '../dist');
+const frontendPath = path.join(__dirname, 'frontend'); // relativ zu dist/
 app.use(express.static(frontendPath));
 
-// SPA fallback: serve index.html for all non-API routes
-app.get('*', (req: Request, res: Response) => {
+app.get('*', (req, res) => {
   if (!req.path.startsWith('/api')) {
     res.sendFile(path.join(frontendPath, 'index.html'));
   } else {
@@ -117,7 +116,7 @@ app.listen(PORT, HOST, () => {
   logger.info('Vocab Trainer started', {
     port: PORT,
     host: HOST,
-    appUrl: `http://${HOST}:${PORT}/vocab.html`,
+    appUrl: `http://${HOST}:${PORT}/index.html`,
     healthUrl: `http://${HOST}:${PORT}/health`,
     environment: process.env.NODE_ENV || 'development',
   });

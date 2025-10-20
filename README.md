@@ -125,7 +125,7 @@ npm start
 - Backend output lives in `dist/` (e.g. `dist/server.js`)
 - Vite outputs frontend assets to `dist/public/` (HTML + `assets/` folder)
 - Frontend source lives in `src/public` (HTML, CSS, TypeScript modules)
-- Version placeholder `{{VERSION}}` is injected into `dist/public/vocab.html` during build
+- Version placeholder `{{VERSION}}` is injected into `dist/public/index.html` during build
 - No manual copy step needed; Vite handles bundling.
 
 ---
@@ -471,7 +471,7 @@ vocab-trainer/
 │       ├── script.ts            # Frontend TypeScript (source)
 │       └── tsconfig.json        # Frontend-specific TS config
 ├── public/
-│   ├── vocab.html               # HTML template (copied to dist/public)
+│   ├── index.html               # HTML template (copied to dist/public)
 │   └── style.css                # CSS stylesheet (copied to dist/public)
 ├── dist/                        # 🏗️ Compiled code (generated, not versioned)
 │   ├── server.js                # Compiled backend server
@@ -485,7 +485,7 @@ vocab-trainer/
 │   └── public/                  # Compiled frontend files
 │       ├── main.js              # Compiled frontend bundle (esbuild)
 │       ├── main.js.map          # Source map
-│       ├── vocab.html           # HTML (copied)
+│       ├── index.html           # HTML (copied)
 │       └── style.css            # CSS (copied)
 ├── logs/                        # Log files (production only)
 │   ├── error.log
