@@ -10,7 +10,9 @@ const __dirname = path.dirname(__filename);
 
 export async function ensureDbInitialized(projectRoot?: string): Promise<void> {
   // projectRoot optional for tests; default to repo root
-  const root = projectRoot || path.join(__dirname, '..', '..');
+  // When compiled to dist, this file lives in dist/src/utils.
+  // To reach the repository root from dist/src/utils we need three '..' (dist/src/utils -> dist/src -> dist -> projectRoot)
+  const root = projectRoot || path.join(__dirname, '..', '..', '..');
   const DB_DIR = path.join(root, 'data');
   const DB_PATH = path.join(DB_DIR, 'vocab.db');
 
