@@ -9,6 +9,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { VocabEntry, Lesson } from '../types/index.js';
 import { logger, logDbError } from '../utils/logger.js';
+import { safeCloseSqlite } from '../utils/db.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -149,40 +150,18 @@ class DatabaseService {
    * @throws Database error if close fails
    */
   close(): Promise<void> {
-    return new Promise((resolve) => {
-      // Idempotent close: if already closing or closed, resolve immediately
-      if (this.closing) return resolve();
-      this.closing = true;
-      if (!this.db) {
-        logger.info('Database already closed');
-        this.closing = false;
-        return resolve();
-      }
-
-      try {
-        this.db.close((err) => {
-          if (err) {
-            // Treat SQLITE_MISUSE (already closed) as non-fatal for shutdown
-            if (err && /SQLITE_MISUSE|closed/i.test(String(err.message))) {
-              logger.warn('Database handle already closed during shutdown', { error: err.message });
-            } else {
-              logger.error('Failed to close database', { error: err.message });
-            }
-          } else {
-            logger.info('Database connection closed');
-          }
-          this.db = null;
-          this.closing = false;
-          resolve();
-        });
-      } catch (e: any) {
-        // If the close throws synchronously, log and continue shutdown
-        logger.warn('Exception during database close', { error: e?.message ?? String(e) });
+    // Use centralized safe close helper
+    if (this.closing) return Promise.resolve();
+    this.closing = true;
+    return safeCloseSqlite(this.db)
+      .catch((err) => {
+        // safeCloseSqlite already logs; swallow to ensure shutdown continues
+        logger.warn('Error while closing database (ignored during shutdown)', { error: err instanceof Error ? err.message : String(err) });
+      })
+      .then(() => {
         this.db = null;
         this.closing = false;
-        resolve();
-      }
-    });
+      });
   }
 }
 

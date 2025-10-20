@@ -49,8 +49,9 @@ function safeClose(callback?: () => void) {
       }
       if (callback) callback();
     });
-  } catch (e: any) {
-    logger.warn('Exception during database close', { error: e?.message ?? String(e) });
+  } catch (e: unknown) {
+    const errMsg = e instanceof Error ? e.message : String(e);
+    logger.warn('Exception during database close', { error: errMsg });
     if (callback) callback();
   }
 }
