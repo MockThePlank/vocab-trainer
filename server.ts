@@ -70,7 +70,7 @@ app.use('/api/vocab', vocabRoutes);
 app.use('/api/admin', adminRoutes);
 
 // Serve Vite build output (frontend)
-const frontendPath = path.join(__dirname, 'public');
+const frontendPath = path.join(__dirname, '../dist');
 app.use(express.static(frontendPath));
 
 // SPA fallback: serve index.html for all non-API routes
