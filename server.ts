@@ -51,6 +51,7 @@ app.use(cors());
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 Minuten
   max: 100, // Limit pro IP
+  skip: (req) => req.path === '/health', // Health Endpoint ausnehmen
   message: 'Zu viele Requests von dieser IP, bitte später versuchen.',
   standardHeaders: true,
   legacyHeaders: false,
@@ -76,7 +77,7 @@ app.use(express.static(frontendPath));
 
 // Health Check Endpoint für Render (must be reachable before SPA fallback)
 app.get('/health', (req: Request, res: Response<ApiResponse>) => {
-  res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+  res.status(200).json({ status: 'ok' });
 });
 
 // SPA fallback: serve index.html for non-API routes
