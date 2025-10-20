@@ -4,6 +4,7 @@ import { logger } from './src/utils/logger.js';
 void (async () => {
   try {
     await ensureDbInitialized();
+    logger.info('DB initialization completed (init-db runner)');
     process.exit(0);
   } catch (e: unknown) {
     const errMsg = e instanceof Error ? e.message : String(e);

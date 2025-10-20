@@ -7,6 +7,7 @@
 import sqlite3 from 'sqlite3';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { getDbPath } from '../utils/db-path.js';
 import { VocabEntry, Lesson } from '../types/index.js';
 import { logger, logDbError } from '../utils/logger.js';
 import { safeCloseSqlite } from '../utils/db.js';
@@ -27,9 +28,8 @@ class DatabaseService {
    * Exits process if connection fails
    */
   constructor() {
-    // Use DB_PATH from environment variable or fall back to local development path
-    // For Render.com, set DB_PATH=/data/vocab.db to match the disk mount
-    const DB_PATH = process.env.DB_PATH || path.join(__dirname, '..', '..', '..', 'data', 'vocab.db');
+    // Resolve DB path consistently
+    const DB_PATH = getDbPath();
     this.db = new sqlite3.Database(DB_PATH, (err) => {
       if (err) {
         logger.error('Failed to open database', { error: err.message, path: DB_PATH });

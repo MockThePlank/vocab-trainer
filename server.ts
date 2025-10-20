@@ -116,11 +116,9 @@ const HOST = '0.0.0.0'; // Wichtig für Render!
 
 async function start() {
   try {
-    // Auto-initialize DB on production start so Render deploys work without extra steps
-    if (process.env.NODE_ENV === 'production') {
-      logger.info('Running DB initialization (production)');
-      await ensureDbInitialized();
-    }
+    // Ensure DB is initialized before accepting requests (run everywhere)
+    logger.info('Running DB initialization (start)');
+    await ensureDbInitialized();
 
     app.listen(PORT, HOST, () => {
       logger.info('Vocab Trainer started', {

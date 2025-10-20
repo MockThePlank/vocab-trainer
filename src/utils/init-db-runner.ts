@@ -4,6 +4,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { logger } from './logger.js';
 import { safeCloseSqlite } from './db.js';
+import { getDbPath } from './db-path.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -13,8 +14,8 @@ export async function ensureDbInitialized(projectRoot?: string): Promise<void> {
   // When compiled to dist, this file lives in dist/src/utils.
   // To reach the repository root from dist/src/utils we need three '..' (dist/src/utils -> dist/src -> dist -> projectRoot)
   const root = projectRoot || path.join(__dirname, '..', '..', '..');
-  const DB_DIR = path.join(root, 'data');
-  const DB_PATH = path.join(DB_DIR, 'vocab.db');
+  const DB_PATH = process.env.DB_PATH || getDbPath();
+  const DB_DIR = path.dirname(DB_PATH);
 
   if (!fs.existsSync(DB_DIR)) {
     fs.mkdirSync(DB_DIR, { recursive: true });
@@ -69,14 +70,19 @@ export async function ensureDbInitialized(projectRoot?: string): Promise<void> {
             return resolve();
           }
 
-          // Migrate from JSON files
+          // Migrate from JSON files (look relative to DB dir or project data folder)
           const lessons: string[] = ['lesson01', 'lesson02', 'lesson03', 'lesson04'];
           const stmt = db.prepare('INSERT OR IGNORE INTO vocabulary (lesson, de, en) VALUES (?, ?, ?)');
 
           lessons.forEach((lesson: string) => {
-            const jsonPath = path.join(root, 'data', `vocab-${lesson}.json`);
+            // Prefer JSON files next to DB dir, otherwise project data/
+            const jsonPathCandidates = [
+              path.join(DB_DIR, `vocab-${lesson}.json`),
+              path.join(root, 'data', `vocab-${lesson}.json`),
+            ];
+            const jsonPath = jsonPathCandidates.find(p => fs.existsSync(p));
             logger.info('Checking for lesson file', { lesson, path: jsonPath });
-            if (fs.existsSync(jsonPath)) {
+            if (jsonPath && fs.existsSync(jsonPath)) {
               const rawData = fs.readFileSync(jsonPath, 'utf-8');
               try {
                 const data = JSON.parse(rawData) as Array<{de: string; en: string}>;
