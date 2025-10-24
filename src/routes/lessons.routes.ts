@@ -9,6 +9,7 @@ import { logger } from '../utils/logger.js';
 import { getDbPath } from '../utils/db-path.js';
 import multer from 'multer';
 import fs from 'fs';
+import { createAutoBackup } from '../utils/auto-backup.js';
 
 const router = Router();
 const upload = multer({ dest: 'tmp/' });
@@ -203,6 +204,12 @@ router.post('/', upload.single('file'), async (req: Request, res: Response) => {
     });
 
     db.close();
+
+    // Auto-backup after creating new lesson
+    createAutoBackup().catch(err => {
+      const errMsg = err instanceof Error ? err.message : String(err);
+      logger.error('Auto-backup failed after lesson creation', { error: errMsg });
+    });
 
     logger.info('New lesson created', { 
       slug: newSlug, 

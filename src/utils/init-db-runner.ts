@@ -1,5 +1,6 @@
 import sqlite3 from 'sqlite3';
 import fs from 'fs';
+import { promises as fsPromises } from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { logger } from './logger.js';
@@ -31,87 +32,231 @@ export async function ensureDbInitialized(projectRoot?: string): Promise<void> {
   });
 
   try {
-    await new Promise<void>((resolve, reject) => {
-      db.serialize(() => {
-        db.run(`
-          CREATE TABLE IF NOT EXISTS vocabulary (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            lesson TEXT NOT NULL,
-            de TEXT NOT NULL,
-            en TEXT NOT NULL,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            UNIQUE(lesson, de, en)
-          )
-        `, (err) => {
-          if (err) return reject(err);
-          logger.info('Vocabulary table created with UNIQUE constraint');
-        });
+    // Create all tables
+    await createTables(db);
 
-        db.run(`CREATE INDEX IF NOT EXISTS idx_lesson ON vocabulary(lesson)`, (err) => {
-          if (err) logger.error('Failed to create index', { error: err.message });
-          else logger.info('Index created on lesson column');
-        });
+    // Check if database already has data
+    const hasData = await checkIfHasData(db);
+    
+    if (hasData) {
+      logger.info('Database already contains data, skipping initialization');
+      return;
+    }
 
-        db.run(`
-          DELETE FROM vocabulary
-          WHERE id NOT IN (
-            SELECT MIN(id) FROM vocabulary GROUP BY lesson, de, en
-          )
-        `, function(err) {
-          if (err) logger.error('Failed to remove duplicates', { error: err.message });
-          else logger.info('Duplicates removed', { rowsAffected: this.changes || 0 });
-        });
+    // Try to restore from auto-backup first
+    const backupRestored = await tryRestoreFromBackup(db, root);
+    
+    if (backupRestored) {
+      logger.info('Database initialized from auto-backup');
+      return;
+    }
 
-        db.get('SELECT COUNT(*) as count FROM vocabulary', (err, row: { count: number } | undefined) => {
-          if (err) return reject(err);
+    // Fallback: Import from seed files
+    await importSeedFiles(db, root, DB_DIR);
+    logger.info('Database initialized from seed files');
 
-          if (row && row.count > 0) {
-            logger.info('Migration skipped - table already contains data', { rowCount: row.count });
-            return resolve();
-          }
-
-          // Migrate from JSON files (look relative to DB dir or project data folder)
-          const lessons: string[] = ['lesson01', 'lesson02', 'lesson03', 'lesson04'];
-          const stmt = db.prepare('INSERT OR IGNORE INTO vocabulary (lesson, de, en) VALUES (?, ?, ?)');
-
-          lessons.forEach((lesson: string) => {
-            // Prefer JSON files next to DB dir, otherwise project data/
-            const jsonPathCandidates = [
-              path.join(DB_DIR, `vocab-${lesson}.json`),
-              path.join(root, 'data', `vocab-${lesson}.json`),
-            ];
-            const jsonPath = jsonPathCandidates.find(p => fs.existsSync(p));
-            logger.info('Checking for lesson file', { lesson, path: jsonPath });
-            if (jsonPath && fs.existsSync(jsonPath)) {
-              const rawData = fs.readFileSync(jsonPath, 'utf-8');
-              try {
-                const data = JSON.parse(rawData) as Array<{de: string; en: string}>;
-                data.forEach(pair => {
-                  stmt.run(lesson, pair.de, pair.en, (err: Error | null) => {
-                    if (err) logger.error('Migration error', { lesson, error: err.message });
-                  });
-                });
-                logger.info('Lesson migration completed', { lesson, pairCount: data.length });
-              } catch (e: unknown) {
-                const msg = e instanceof Error ? e.message : String(e);
-                logger.error('Failed to parse lesson JSON', { lesson, error: msg });
-              }
-            } else {
-              logger.warn('Lesson JSON file not found', { path: jsonPath });
-            }
-          });
-
-          stmt.finalize(() => {
-            db.get('SELECT COUNT(*) as count FROM vocabulary', (err, row: { count: number } | undefined) => {
-              if (err) logger.error('Failed to count vocabulary entries', { error: err.message });
-              else logger.info('Migration completed', { totalVocabulary: row?.count || 0 });
-              resolve();
-            });
-          });
-        });
-      });
-    });
   } finally {
     await safeCloseSqlite(db);
   }
+}
+
+async function createTables(db: sqlite3.Database): Promise<void> {
+  return new Promise((resolve, reject) => {
+    db.serialize(() => {
+      // Vocabulary table
+      db.run(`
+        CREATE TABLE IF NOT EXISTS vocabulary (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          lesson TEXT NOT NULL,
+          de TEXT NOT NULL,
+          en TEXT NOT NULL,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+          UNIQUE(lesson, de, en)
+        )
+      `, (err) => {
+        if (err) return reject(err);
+        logger.info('Vocabulary table created with UNIQUE constraint');
+      });
+
+      // Index on lesson column
+      db.run(`CREATE INDEX IF NOT EXISTS idx_lesson ON vocabulary(lesson)`, (err) => {
+        if (err) logger.error('Failed to create index', { error: err.message });
+        else logger.info('Index created on lesson column');
+      });
+
+      // Lessons table
+      db.run(`
+        CREATE TABLE IF NOT EXISTS lessons (
+          slug TEXT PRIMARY KEY,
+          title TEXT,
+          description TEXT,
+          entry_count INTEGER DEFAULT 0,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+      `, (err) => {
+        if (err) return reject(err);
+        logger.info('Lessons table created');
+      });
+
+      // Users table
+      db.run(`
+        CREATE TABLE IF NOT EXISTS users (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          username TEXT UNIQUE NOT NULL,
+          password_hash TEXT NOT NULL,
+          display_name TEXT,
+          is_admin INTEGER DEFAULT 0,
+          created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+        )
+      `, (err) => {
+        if (err) return reject(err);
+        logger.info('Users table created');
+      });
+
+      // Remove duplicates
+      db.run(`
+        DELETE FROM vocabulary
+        WHERE id NOT IN (
+          SELECT MIN(id) FROM vocabulary GROUP BY lesson, de, en
+        )
+      `, function(err) {
+        if (err) logger.error('Failed to remove duplicates', { error: err.message });
+        else logger.info('Duplicates removed', { rowsAffected: this.changes || 0 });
+        resolve();
+      });
+    });
+  });
+}
+
+async function checkIfHasData(db: sqlite3.Database): Promise<boolean> {
+  return new Promise((resolve, reject) => {
+    db.get('SELECT COUNT(*) as count FROM vocabulary', (err, row: { count: number } | undefined) => {
+      if (err) return reject(err);
+      resolve((row?.count || 0) > 0);
+    });
+  });
+}
+
+async function tryRestoreFromBackup(db: sqlite3.Database, root: string): Promise<boolean> {
+  try {
+    const backupPath = path.join(root, 'data', 'backups', 'auto-backup.json');
+    
+    // Check if backup exists
+    try {
+      await fsPromises.access(backupPath);
+    } catch {
+      logger.info('No auto-backup found, will use seed files');
+      return false;
+    }
+
+    // Load backup
+    const backupContent = await fsPromises.readFile(backupPath, 'utf-8');
+    const backupData = JSON.parse(backupContent);
+
+    if (!backupData.lessons || !backupData.vocabulary) {
+      logger.warn('Invalid backup format, falling back to seed files');
+      return false;
+    }
+
+    logger.info('Restoring from auto-backup', { 
+      lessons: backupData.lessons.length,
+      vocabulary: backupData.vocabulary.length 
+    });
+
+    // Import lessons
+    for (const lesson of backupData.lessons) {
+      await new Promise<void>((resolve, reject) => {
+        db.run(
+          'INSERT OR REPLACE INTO lessons (slug, title, description, entry_count, created_at) VALUES (?, ?, ?, ?, ?)',
+          [lesson.slug, lesson.title, lesson.description, lesson.entry_count, lesson.created_at],
+          (err) => err ? reject(err) : resolve()
+        );
+      });
+    }
+
+    // Import vocabulary
+    for (const vocab of backupData.vocabulary) {
+      await new Promise<void>((resolve, reject) => {
+        db.run(
+          'INSERT OR IGNORE INTO vocabulary (lesson, de, en) VALUES (?, ?, ?)',
+          [vocab.lesson, vocab.de, vocab.en],
+          (err) => err ? reject(err) : resolve()
+        );
+      });
+    }
+
+    return true;
+  } catch (error) {
+    const errMsg = error instanceof Error ? error.message : String(error);
+    logger.error('Backup restore failed', { error: errMsg });
+    return false;
+  }
+}
+
+async function importSeedFiles(db: sqlite3.Database, root: string, DB_DIR: string): Promise<void> {
+  const lessons: string[] = ['lesson01', 'lesson02', 'lesson03', 'lesson04', 'lesson05'];
+  const stmt = db.prepare('INSERT OR IGNORE INTO vocabulary (lesson, de, en) VALUES (?, ?, ?)');
+
+  for (const lesson of lessons) {
+    // Prefer JSON files next to DB dir, otherwise project data/
+    const jsonPathCandidates = [
+      path.join(DB_DIR, `vocab-${lesson}.json`),
+      path.join(root, 'data', `vocab-${lesson}.json`),
+    ];
+    const jsonPath = jsonPathCandidates.find(p => fs.existsSync(p));
+    
+    if (jsonPath && fs.existsSync(jsonPath)) {
+      const rawData = fs.readFileSync(jsonPath, 'utf-8');
+      try {
+        const data = JSON.parse(rawData) as Array<{de: string; en: string}>;
+        let importedCount = 0;
+        
+        for (const pair of data) {
+          await new Promise<void>((resolve, reject) => {
+            stmt.run(lesson, pair.de, pair.en, (err: Error | null) => {
+              if (err) {
+                logger.error('Migration error', { lesson, error: err.message });
+                reject(err);
+              } else {
+                importedCount++;
+                resolve();
+              }
+            });
+          });
+        }
+
+        // Update lessons metadata
+        const lessonNumber = lesson.replace('lesson', '');
+        const title = `Lektion ${lessonNumber.padStart(2, '0')}`;
+        
+        await new Promise<void>((resolve, reject) => {
+          db.run(
+            'INSERT OR REPLACE INTO lessons (slug, title, entry_count) VALUES (?, ?, ?)',
+            [lesson, title, importedCount],
+            (err) => err ? reject(err) : resolve()
+          );
+        });
+
+        logger.info('Seed file imported', { lesson, pairCount: importedCount });
+      } catch (e: unknown) {
+        const msg = e instanceof Error ? e.message : String(e);
+        logger.error('Failed to parse lesson JSON', { lesson, error: msg });
+      }
+    } else {
+      logger.warn('Seed file not found', { lesson, candidates: jsonPathCandidates });
+    }
+  }
+
+  await new Promise<void>((resolve, reject) => {
+    stmt.finalize((err) => {
+      if (err) reject(err);
+      else {
+        db.get('SELECT COUNT(*) as count FROM vocabulary', (err, row: { count: number } | undefined) => {
+          if (err) logger.error('Failed to count vocabulary entries', { error: err.message });
+          else logger.info('Seed import completed', { totalVocabulary: row?.count || 0 });
+          resolve();
+        });
+      }
+    });
+  });
 }

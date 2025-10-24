@@ -13,6 +13,7 @@ import { getDbPath } from '../utils/db-path.js';
 import { logger } from '../utils/logger.js';
 import multer from 'multer';
 import fs from 'fs/promises';
+import { createAutoBackup } from '../utils/auto-backup.js';
 
 const router = Router();
 const upload = multer({ dest: 'tmp/' });
@@ -42,6 +43,13 @@ router.delete('/vocab/:id', requireApiKey, async (req: Request, res: Response<Ap
     if (deleted === 0) {
       return res.status(404).json({ error: 'Vokabel nicht gefunden' });
     }
+    
+    // Auto-backup after data modification
+    createAutoBackup().catch(err => {
+      const errMsg = err instanceof Error ? err.message : String(err);
+      logger.error('Auto-backup failed after delete', { error: errMsg });
+    });
+    
     res.json({ success: true, deleted });
   } catch {
     res.status(500).json({ error: 'Konnte Vokabel nicht löschen' });
@@ -90,6 +98,13 @@ router.put('/vocab/:id', requireApiKey, async (req: Request, res: Response<ApiRe
     if (updated === 0) {
       return res.status(404).json({ error: 'Vokabel nicht gefunden' });
     }
+    
+    // Auto-backup after data modification
+    createAutoBackup().catch(err => {
+      const errMsg = err instanceof Error ? err.message : String(err);
+      logger.error('Auto-backup failed after update', { error: errMsg });
+    });
+    
     res.json({ success: true, updated });
   } catch {
     res.status(500).json({ error: 'Konnte Vokabel nicht aktualisieren' });
@@ -224,6 +239,12 @@ router.post('/import', requireApiKey, upload.single('file'), async (req: Request
     await fs.unlink((req as any).file.path);
 
     db.close();
+
+    // Auto-backup after import
+    createAutoBackup().catch(err => {
+      const errMsg = err instanceof Error ? err.message : String(err);
+      logger.error('Auto-backup failed after import', { error: errMsg });
+    });
 
     logger.info('Database imported', { importedLessons, importedVocabulary });
     res.json({

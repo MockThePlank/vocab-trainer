@@ -6,6 +6,7 @@
 import { Router, Request, Response } from 'express';
 import { dbService } from '../services/db.service.js';
 import { ApiResponse } from '../types/index.js';
+import { createAutoBackup } from '../utils/auto-backup.js';
 
 const router = Router();
 
@@ -81,6 +82,14 @@ router.post('/:lesson', async (req: Request, res: Response<ApiResponse>) => {
 
   try {
     const id = await dbService.addVocab(lesson, sanitizedDe, sanitizedEn);
+    
+    // Auto-backup after data modification
+    createAutoBackup().catch(err => {
+      const errMsg = err instanceof Error ? err.message : String(err);
+      // Log error but don't fail the request
+      console.error('Auto-backup failed:', errMsg);
+    });
+    
     res.json({ success: true, id });
   } catch {
     res.status(500).json({ error: 'Konnte Vokabel nicht speichern' });
