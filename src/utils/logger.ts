@@ -61,7 +61,13 @@ export const logDbOperation = (operation: string, details?: Record<string, unkno
  * @param error - The error object
  */
 export const logDbError = (operation: string, error: Error) => {
-  logger.error(`Database error during ${operation}`, { error: error.message, stack: error.stack });
+  // Treat constraint violations as warnings (they are often expected, e.g., duplicate inserts)
+  const isConstraint = typeof error.message === 'string' && error.message.includes('SQLITE_CONSTRAINT');
+  if (isConstraint) {
+    logger.warn(`Database constraint during ${operation}`, { error: error.message });
+  } else {
+    logger.error(`Database error during ${operation}`, { error: error.message, stack: error.stack });
+  }
 };
 
 /**

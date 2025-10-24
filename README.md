@@ -1,5 +1,8 @@
 # Fia's Vocabulary Trainer 🐾
 
+[![CI (main)](https://github.com/MockThePlank/vocab-trainer/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/MockThePlank/vocab-trainer/actions/workflows/ci.yml)
+[![CI (develop)](https://github.com/MockThePlank/vocab-trainer/actions/workflows/ci.yml/badge.svg?branch=develop)](https://github.com/MockThePlank/vocab-trainer/actions/workflows/ci.yml)
+
 An interactive German-English vocabulary trainer with multiple lessons, success animations, and persistent data storage.
 
 ## Features
@@ -703,7 +706,7 @@ The app randomly selects one of 5 success animations:
 
 ## Testing
 
-**Current status**: Tests are not yet implemented.
+**Current status**: Basic integration tests are implemented using Vitest. More unit and integration tests are planned.
 
 **Planned**:
 - Unit tests for the database service (`db.service.ts`)
@@ -711,7 +714,7 @@ The app randomly selects one of 5 success animations:
 - Middleware tests for authentication
 - Frontend E2E tests (Playwright/Cypress)
 
-**Test framework**: Jest + Supertest
+**Test framework**: Vitest + Supertest
 
 ---
 
@@ -733,23 +736,6 @@ The app randomly selects one of 5 success animations:
 5. Build check: `npm run build`
 6. Commit & push
 7. Create a pull request
-
----
-
-## Roadmap
-
-### High Priority
-- [ ] Unit and integration tests (Jest)
-- [ ] Enhanced health check with DB connectivity test
-
-### Medium Priority
-- [ ] Save lesson progress (LocalStorage)
-- [ ] Export/import vocabulary (CSV)
-
-### Low Priority
-- [ ] Audio pronunciation (Text-to-Speech API)
-- [ ] Spaced repetition algorithm
-- [ ] Multiple-choice mode
 
 ---
 

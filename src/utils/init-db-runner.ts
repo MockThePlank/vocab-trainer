@@ -188,7 +188,8 @@ async function tryRestoreFromBackup(db: sqlite3.Database, root: string): Promise
     return true;
   } catch (error) {
     const errMsg = error instanceof Error ? error.message : String(error);
-    logger.error('Backup restore failed', { error: errMsg });
+    // Log as warning because a malformed or absent backup is an expected recoverable condition
+    logger.warn('Backup restore failed (falling back to seed files)', { error: errMsg });
     return false;
   }
 }
@@ -243,7 +244,12 @@ async function importSeedFiles(db: sqlite3.Database, root: string, DB_DIR: strin
         logger.error('Failed to parse lesson JSON', { lesson, error: msg });
       }
     } else {
-      logger.warn('Seed file not found', { lesson, candidates: jsonPathCandidates });
+      // During tests we don't want noisy warnings for missing seed files in ephemeral temp folders.
+      if (process.env.NODE_ENV === 'test') {
+        logger.debug('Seed file not found (test mode)', { lesson, candidates: jsonPathCandidates });
+      } else {
+        logger.warn('Seed file not found', { lesson, candidates: jsonPathCandidates });
+      }
     }
   }
 

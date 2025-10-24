@@ -1,8 +1,6 @@
 {
   "name": "vocab-trainer",
-  "author": {
-    "name": "CodeBeard"
-  },
+  "author": "CodeBeard",
   "version": "3.0.0",
   "description": "Ein spielerischer Vokabeltrainer mit Express-Backend und Konfetti.",
   "type": "module",
@@ -19,7 +17,10 @@
     "dev:frontend": "vite",
     "dev": "concurrently --kill-others-on-fail \"npm:dev:backend\" \"npm:dev:frontend\"",
     "lint": "eslint \"**/*.ts\" --ext .ts",
-    "lint:fix": "eslint \"**/*.ts\" --ext .ts --fix"
+    "lint:fix": "eslint \"**/*.ts\" --ext .ts --fix",
+    "test": "vitest run",
+    "test:watch": "vitest --watch",
+    "test:ui": "vitest"
   },
   "dependencies": {
     "@types/cors": "^2.8.19",
@@ -38,10 +39,13 @@
     "winston": "^3.18.3"
   },
   "devDependencies": {
+    "@types/supertest": "^2.0.12",
     "@typescript-eslint/eslint-plugin": "^8.46.1",
     "@typescript-eslint/parser": "^8.46.1",
     "concurrently": "^8.2.2",
     "eslint": "^9.37.0",
-    "typescript": "^5.9.3"
+    "supertest": "^6.3.4",
+    "typescript": "^5.9.3",
+    "vitest": "^4.0.3"
   }
 }

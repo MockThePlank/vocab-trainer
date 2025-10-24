@@ -19,7 +19,7 @@ const __dirname = path.dirname(__filename);
  * Service class for database operations
  * Implements CRUD operations for vocabulary entries
  */
-class DatabaseService {
+export class DatabaseService {
   private db: sqlite3.Database | null = null;
   private closing = false;
 
@@ -27,9 +27,9 @@ class DatabaseService {
    * Creates a new DatabaseService instance and establishes SQLite connection
    * Exits process if connection fails
    */
-  constructor() {
+  constructor(dbPath?: string) {
     // Resolve DB path consistently
-    const DB_PATH = getDbPath();
+    const DB_PATH = dbPath || getDbPath();
     this.db = new sqlite3.Database(DB_PATH, (err) => {
       if (err) {
         logger.error('Failed to open database', { error: err.message, path: DB_PATH });
@@ -172,4 +172,5 @@ class DatabaseService {
  * import { dbService } from './services/db.service.js';
  * const vocab = await dbService.getVocabByLesson('lesson01');
  */
+// Default singleton for application usage
 export const dbService = new DatabaseService();
