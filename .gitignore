@@ -9,6 +9,10 @@ data/*.db
 data/*.db-*
 data/backups/
 
+# Upload directories
+tmp/
+uploads/
+
 # Environment variables
 .env
 .env.local
