@@ -7,6 +7,7 @@ import { Router, Request, Response } from 'express';
 import { dbService } from '../services/db.service.js';
 import { ApiResponse } from '../types/index.js';
 import { createAutoBackup } from '../utils/auto-backup.js';
+import { logger } from '../utils/logger.js';
 
 const router = Router();
 
@@ -87,7 +88,7 @@ router.post('/:lesson', async (req: Request, res: Response<ApiResponse>) => {
     createAutoBackup().catch(err => {
       const errMsg = err instanceof Error ? err.message : String(err);
       // Log error but don't fail the request
-      console.error('Auto-backup failed:', errMsg);
+      logger.error('Auto-backup failed', { error: errMsg });
     });
     
     res.json({ success: true, id });

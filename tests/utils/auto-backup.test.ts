@@ -1,3 +1,5 @@
+/// <reference types="vitest" />
+import { describe, test, expect } from 'vitest';
 import fs from 'fs';
 import path from 'path';
 import { promises as fsp } from 'fs';
@@ -20,24 +22,19 @@ describe('Auto-backup create & restore', () => {
 
     const { createAutoBackup } = await import('../../src/utils/auto-backup.js');
 
-    // createAutoBackup writes to process.cwd()/data/backups — run it inside runRoot
-    const originalCwd = process.cwd();
-    try {
-      process.chdir(runRoot);
-      await createAutoBackup();
+    // Prefer explicit destination for backups during tests
+    process.env.AUTO_BACKUP_DIR = backupsDir;
+    await createAutoBackup();
 
-      const backupPath = path.join(runRoot, 'data', 'backups', 'auto-backup.json');
-      expect(fs.existsSync(backupPath)).toBeTruthy();
+    const backupPath = path.join(backupsDir, 'auto-backup.json');
+    expect(fs.existsSync(backupPath)).toBeTruthy();
 
-      const raw = await fsp.readFile(backupPath, 'utf-8');
-      const parsed = JSON.parse(raw);
-      expect(parsed).toHaveProperty('lessons');
-      expect(Array.isArray(parsed.lessons)).toBe(true);
-      expect(parsed).toHaveProperty('vocabulary');
-      expect(Array.isArray(parsed.vocabulary)).toBe(true);
-    } finally {
-      process.chdir(originalCwd);
-    }
+    const raw = await fsp.readFile(backupPath, 'utf-8');
+    const parsed = JSON.parse(raw);
+    expect(parsed).toHaveProperty('lessons');
+    expect(Array.isArray(parsed.lessons)).toBe(true);
+    expect(parsed).toHaveProperty('vocabulary');
+    expect(Array.isArray(parsed.vocabulary)).toBe(true);
 
     // cleanup DB file
     try { await fsp.unlink(dbFile); } catch {}

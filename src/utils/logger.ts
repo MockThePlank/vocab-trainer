@@ -7,6 +7,7 @@
 import winston from 'winston';
 
 const isProduction = process.env.NODE_ENV === 'production';
+const isTest = process.env.NODE_ENV === 'test';
 
 // Custom format for development (colorized and readable)
 const devFormat = winston.format.combine(
@@ -35,7 +36,8 @@ const prodFormat = winston.format.combine(
  * logger.error('Database error', { error: err.message });
  */
 export const logger = winston.createLogger({
-  level: isProduction ? 'info' : 'debug',
+  // In production we keep 'info'. In test runs we raise to 'warn' to reduce noise.
+  level: isProduction ? 'info' : isTest ? 'warn' : 'debug',
   format: isProduction ? prodFormat : devFormat,
   defaultMeta: { service: 'vocab-trainer' },
   transports: [

@@ -18,9 +18,9 @@
     "dev": "concurrently --kill-others-on-fail \"npm:dev:backend\" \"npm:dev:frontend\"",
     "lint": "eslint \"**/*.ts\" --ext .ts",
     "lint:fix": "eslint \"**/*.ts\" --ext .ts --fix",
-    "test": "vitest run",
-    "test:watch": "vitest --watch",
-    "test:ui": "vitest"
+  "test": "VITEST_TSCONFIG=tsconfig.test.json vitest run",
+  "test:watch": "VITEST_TSCONFIG=tsconfig.test.json vitest --watch",
+  "test:ui": "VITEST_TSCONFIG=tsconfig.test.json vitest"
   },
   "dependencies": {
     "@types/cors": "^2.8.19",

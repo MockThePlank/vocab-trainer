@@ -1,5 +1,6 @@
+/// <reference types="vitest" />
 import { requireApiKey } from '../../src/middleware/auth.middleware';
-import { vi } from 'vitest';
+import { describe, test, expect, vi } from 'vitest';
 
 describe('auth.middleware requireApiKey', () => {
   test('rejects when API key missing or wrong', () => {

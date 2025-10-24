@@ -14,13 +14,15 @@ import { logger } from './logger.js';
  * Creates an automatic backup of all lessons and vocabulary
  * Saves to data/backups/auto-backup.json (git-ignored)
  */
-export async function createAutoBackup(): Promise<void> {
+export async function createAutoBackup(destDir?: string): Promise<void> {
   const DB_PATH = getDbPath();
   const db = new sqlite3.Database(DB_PATH);
 
   try {
-    // Ensure backup directory exists
-    const backupDir = path.join(process.cwd(), 'data', 'backups');
+    // Determine backup directory: explicit destDir -> AUTO_BACKUP_DIR env -> default project data/backups
+    const backupDir = destDir
+      || process.env.AUTO_BACKUP_DIR
+      || path.join(process.cwd(), 'data', 'backups');
     await fs.mkdir(backupDir, { recursive: true });
 
     // Export all lessons
@@ -54,7 +56,7 @@ export async function createAutoBackup(): Promise<void> {
     };
 
     // Save backup file
-    const backupPath = path.join(backupDir, 'auto-backup.json');
+  const backupPath = path.join(backupDir, 'auto-backup.json');
     await fs.writeFile(backupPath, JSON.stringify(backupData, null, 2), 'utf-8');
 
     logger.info('Auto-backup created successfully', { 

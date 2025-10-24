@@ -1,4 +1,5 @@
 import express from 'express';
+import { describe, test, expect } from 'vitest';
 import request from 'supertest';
 import fs from 'fs';
 import path from 'path';
@@ -14,7 +15,11 @@ describe('lessons.routes', () => {
     process.env.DB_PATH = dbFile;
 
   const { ensureDbInitialized } = await import('../../src/utils/init-db-runner.js');
-    await ensureDbInitialized(runRoot);
+  await ensureDbInitialized(runRoot);
+
+  // Ensure auto-backups created by route go into the test run folder
+  process.env.AUTO_BACKUP_DIR = path.join(runRoot, 'data', 'backups');
+  fs.mkdirSync(process.env.AUTO_BACKUP_DIR, { recursive: true });
 
     // Build test app and mount router
     const app = express();
@@ -39,7 +44,11 @@ describe('lessons.routes', () => {
     process.env.DB_PATH = dbFile;
 
   const { ensureDbInitialized } = await import('../../src/utils/init-db-runner.js');
-    await ensureDbInitialized(runRoot);
+  await ensureDbInitialized(runRoot);
+
+  // Make sure route-created auto-backup lands in a test folder
+  process.env.AUTO_BACKUP_DIR = path.join(runRoot, 'data', 'backups');
+  fs.mkdirSync(process.env.AUTO_BACKUP_DIR, { recursive: true });
 
     // prepare upload file with 3 pairs
     const uploadFile = path.join(runRoot, 'upload.json');
