@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <title>Admin - Fias Vokabeltrainer</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='48' fill='%2300aaff'/><text x='50' y='50' text-anchor='middle' dominant-baseline='central' font-size='60'>🐾</text></svg>">
+  <style>
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    h1 {
+      color: #333;
+      text-align: center;
+    }
+    .section {
+      background: white;
+      border-radius: 8px;
+      padding: 20px;
+      margin: 20px 0;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    h2 {
+      color: #00aaff;
+      margin-top: 0;
+    }
+    label {
+      display: block;
+      margin: 10px 0 5px;
+      font-weight: bold;
+    }
+    input[type="password"],
+    input[type="file"] {
+      width: 100%;
+      padding: 10px;
+      border: 2px solid #a3d3ff;
+      border-radius: 5px;
+      font-size: 1em;
+      box-sizing: border-box;
+    }
+    button {
+      background: #00aaff;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 1em;
+      font-weight: bold;
+      margin: 10px 5px 0 0;
+      transition: background 0.2s;
+    }
+    button:hover {
+      background: #0088cc;
+    }
+    button.secondary {
+      background: #6c757d;
+    }
+    button.secondary:hover {
+      background: #5a6268;
+    }
+    #message {
+      margin-top: 15px;
+      padding: 10px;
+      border-radius: 5px;
+      display: none;
+    }
+    #message.success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+      display: block;
+    }
+    #message.error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+      display: block;
+    }
+    .button-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 15px;
+    }
+    .info {
+      background: #e7f3ff;
+      padding: 10px;
+      border-radius: 5px;
+      margin-top: 10px;
+      font-size: 0.9em;
+      color: #004085;
+    }
+  </style>
+</head>
+<body>
+  <h1>🔐 Admin-Bereich</h1>
+
+  <div class="section">
+    <h2>🔑 API-Schlüssel</h2>
+    <label for="apiKey">Admin API-Schlüssel:</label>
+    <input type="password" id="apiKey" placeholder="Gib deinen Admin-API-Key ein" required>
+    <div class="info">
+      💡 Dein API-Schlüssel wird nur lokal gespeichert und für alle Admin-Aktionen verwendet.
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>💾 Backup & Wiederherstellung</h2>
+    
+    <div>
+      <h3>📤 Backup erstellen</h3>
+      <p>Exportiert alle Lektionen und Vokabeln als JSON-Datei.</p>
+      <button id="exportBtn">📥 Backup herunterladen</button>
+    </div>
+
+    <hr style="margin: 20px 0; border: none; border-top: 1px solid #ddd;">
+
+    <div>
+      <h3>📥 Backup wiederherstellen</h3>
+      <p>Importiert Lektionen und Vokabeln aus einer Backup-Datei.</p>
+      <label for="importFile">JSON-Backup-Datei:</label>
+      <input type="file" id="importFile" accept=".json">
+      <button id="importBtn" class="secondary">📤 Backup importieren</button>
+      <div class="info">
+        ⚠️ Der Import überschreibt existierende Lektionen mit gleichem Namen. Vokabeln werden nur hinzugefügt, wenn sie noch nicht existieren.
+      </div>
+    </div>
+  </div>
+
+  <div id="message"></div>
+
+  <script type="module" src="/admin.ts"></script>
+</body>
+</html>

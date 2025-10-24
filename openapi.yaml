@@ -1,0 +1,601 @@
+openapi: 3.1.0
+info:
+  title: Vocab Trainer API
+  description: |
+    Ein spielerischer Vokabeltrainer mit Express-Backend.
+    
+    Diese API ermöglicht:
+    - Verwalten von Lektionen (lesson01-lesson99)
+    - CRUD-Operationen für Deutsch-Englisch Vokabelpaare
+    - Export/Import von Backups (Admin)
+    - Geschützte Admin-Endpunkte mit API-Key
+    
+    **Authentifizierung:**
+    - Admin-Endpunkte benötigen den `X-API-Key` Header
+    - Der API-Key wird über die Umgebungsvariable `ADMIN_API_KEY` konfiguriert
+  version: 2.1.0
+  contact:
+    name: CodeBeard
+  license:
+    name: MIT
+
+servers:
+  - url: http://localhost:3000
+    description: Lokale Entwicklungsumgebung
+  - url: https://your-app.onrender.com
+    description: Produktionsserver (Render.com)
+
+tags:
+  - name: Vocabulary
+    description: CRUD-Operationen für Vokabeln
+  - name: Lessons
+    description: Verwaltung von Lektionen
+  - name: Admin
+    description: Administrative Operationen (API-Key erforderlich)
+  - name: System
+    description: System-Endpunkte
+
+paths:
+  /health:
+    get:
+      summary: Health Check
+      description: Prüft, ob der Server läuft und antwortet
+      tags:
+        - System
+      responses:
+        '200':
+          description: Server ist gesund
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  timestamp:
+                    type: string
+                    format: date-time
+
+  /api/vocab/{lesson}:
+    get:
+      summary: Vokabeln einer Lektion abrufen
+      description: Gibt alle Vokabelpaare für die angegebene Lektion zurück
+      tags:
+        - Vocabulary
+      parameters:
+        - name: lesson
+          in: path
+          required: true
+          description: Lektion-ID (lesson01 bis lesson99)
+          schema:
+            type: string
+            pattern: '^lesson(0[1-9]|[1-9][0-9])$'
+            example: lesson01
+      responses:
+        '200':
+          description: Liste der Vokabeln
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/VocabEntry'
+        '400':
+          description: Ungültige Lektion
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Datenbankfehler
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      summary: Neue Vokabel hinzufügen
+      description: Fügt ein neues Vokabelpaar zur angegebenen Lektion hinzu
+      tags:
+        - Vocabulary
+      parameters:
+        - name: lesson
+          in: path
+          required: true
+          description: Lektion-ID (lesson01 bis lesson99)
+          schema:
+            type: string
+            pattern: '^lesson(0[1-9]|[1-9][0-9])$'
+            example: lesson01
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - de
+                - en
+              properties:
+                de:
+                  type: string
+                  maxLength: 60
+                  description: Deutsches Wort
+                  example: beschreiben
+                en:
+                  type: string
+                  maxLength: 60
+                  description: Englische Übersetzung
+                  example: describe
+      responses:
+        '200':
+          description: Vokabel erfolgreich hinzugefügt
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  id:
+                    type: integer
+                    description: ID der neu erstellten Vokabel
+                    example: 42
+        '400':
+          description: Ungültige Eingabe
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalidLesson:
+                  value:
+                    error: Ungültige Lesson
+                emptyFields:
+                  value:
+                    error: de und en dürfen nicht leer sein
+                tooLong:
+                  value:
+                    error: Vokabeln dürfen maximal 60 Zeichen lang sein
+        '500':
+          description: Datenbankfehler
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/lessons:
+    get:
+      summary: Alle Lektionen abrufen
+      description: Gibt eine Liste aller verfügbaren Lektionen zurück
+      tags:
+        - Lessons
+      responses:
+        '200':
+          description: Liste der Lektionen
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Lesson'
+        '500':
+          description: Datenbankfehler
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    post:
+      summary: Neue Lektion erstellen
+      description: |
+        Erstellt eine neue Lektion mit automatischer Nummerierung (lesson01-lesson99).
+        Optional kann eine JSON-Datei mit Vokabelpaaren hochgeladen werden.
+      tags:
+        - Lessons
+      requestBody:
+        required: false
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: Optional - JSON-Datei mit Vokabelpaaren
+            encoding:
+              file:
+                contentType: application/json
+      responses:
+        '200':
+          description: Lektion erfolgreich erstellt
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  lesson:
+                    type: object
+                    properties:
+                      slug:
+                        type: string
+                        example: lesson08
+                      title:
+                        type: string
+                        example: Lektion 08
+                      vocabCount:
+                        type: integer
+                        example: 5
+        '400':
+          description: Maximale Anzahl erreicht oder ungültige Datei
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                maxLessons:
+                  value:
+                    error: Maximale Anzahl von 99 Lektionen erreicht
+                invalidFile:
+                  value:
+                    error: Ungültiges Dateiformat
+        '500':
+          description: Datenbankfehler
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/admin/vocab/{id}:
+    put:
+      summary: Vokabel aktualisieren
+      description: Aktualisiert eine bestehende Vokabel (Admin-Berechtigung erforderlich)
+      tags:
+        - Admin
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Vokabel-ID
+          schema:
+            type: integer
+            minimum: 1
+            example: 42
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - de
+                - en
+              properties:
+                de:
+                  type: string
+                  maxLength: 60
+                  description: Deutsches Wort
+                  example: beschreiben
+                en:
+                  type: string
+                  maxLength: 60
+                  description: Englische Übersetzung
+                  example: to describe
+      responses:
+        '200':
+          description: Vokabel erfolgreich aktualisiert
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  updated:
+                    type: integer
+                    description: Anzahl der aktualisierten Zeilen
+                    example: 1
+        '400':
+          description: Ungültige Eingabe
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Nicht autorisiert - ungültiger API-Key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Vokabel nicht gefunden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Datenbankfehler
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+    delete:
+      summary: Vokabel löschen
+      description: Löscht eine Vokabel (Admin-Berechtigung erforderlich)
+      tags:
+        - Admin
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Vokabel-ID
+          schema:
+            type: integer
+            minimum: 1
+            example: 42
+      responses:
+        '200':
+          description: Vokabel erfolgreich gelöscht
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  deleted:
+                    type: integer
+                    description: Anzahl der gelöschten Zeilen
+                    example: 1
+        '400':
+          description: Ungültige ID
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Nicht autorisiert - ungültiger API-Key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Vokabel nicht gefunden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Datenbankfehler
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/admin/export:
+    get:
+      summary: Datenbank exportieren
+      description: |
+        Exportiert alle Lektionen und Vokabeln als JSON-Backup.
+        Die Datei enthält Metadaten (Datum, Version) und Statistiken.
+      tags:
+        - Admin
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: Export erfolgreich
+          headers:
+            Content-Disposition:
+              schema:
+                type: string
+                example: attachment; filename="vocab-trainer-backup-2025-10-24.json"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BackupData'
+        '401':
+          description: Nicht autorisiert - ungültiger API-Key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Export fehlgeschlagen
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/admin/import:
+    post:
+      summary: Datenbank importieren
+      description: |
+        Importiert Lektionen und Vokabeln aus einer Backup-Datei.
+        - Lektionen werden mit INSERT OR REPLACE importiert (überschreibt bestehende)
+        - Vokabeln werden mit INSERT OR IGNORE importiert (verhindert Duplikate)
+      tags:
+        - Admin
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: JSON-Backup-Datei
+      responses:
+        '200':
+          description: Import erfolgreich
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  imported:
+                    type: object
+                    properties:
+                      lessons:
+                        type: integer
+                        description: Anzahl importierter Lektionen
+                        example: 7
+                      vocabulary:
+                        type: integer
+                        description: Anzahl importierter Vokabeln
+                        example: 46
+        '400':
+          description: Keine Datei oder ungültiges Format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                noFile:
+                  value:
+                    error: Keine Datei hochgeladen
+                invalidFormat:
+                  value:
+                    error: Ungültiges Backup-Format
+        '401':
+          description: Nicht autorisiert - ungültiger API-Key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Import fehlgeschlagen
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: |
+        Admin API-Key für geschützte Endpunkte.
+        Wird über die Umgebungsvariable ADMIN_API_KEY konfiguriert.
+
+  schemas:
+    VocabEntry:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Eindeutige ID der Vokabel
+          example: 42
+        lesson:
+          type: string
+          description: Zugehörige Lektion
+          pattern: '^lesson(0[1-9]|[1-9][0-9])$'
+          example: lesson01
+        de:
+          type: string
+          maxLength: 60
+          description: Deutsches Wort
+          example: beschreiben
+        en:
+          type: string
+          maxLength: 60
+          description: Englische Übersetzung
+          example: describe
+        created_at:
+          type: string
+          format: date-time
+          description: Erstellungszeitpunkt
+          example: '2025-10-19T10:37:11Z'
+
+    Lesson:
+      type: object
+      properties:
+        slug:
+          type: string
+          description: Eindeutiger Lektion-Identifier
+          pattern: '^lesson(0[1-9]|[1-9][0-9])$'
+          example: lesson01
+        title:
+          type: string
+          nullable: true
+          description: Anzeigename der Lektion
+          example: Lektion 01
+        description:
+          type: string
+          nullable: true
+          description: Optionale Beschreibung
+          example: Grundvokabular
+        entry_count:
+          type: integer
+          description: Anzahl der Vokabeln in dieser Lektion
+          example: 14
+        created_at:
+          type: string
+          format: date-time
+          description: Erstellungszeitpunkt
+          example: '2025-10-20T19:16:55Z'
+
+    BackupData:
+      type: object
+      properties:
+        exportDate:
+          type: string
+          format: date-time
+          description: Zeitpunkt des Exports
+          example: '2025-10-24T17:32:18.987Z'
+        version:
+          type: string
+          description: Backup-Format Version
+          example: '1.0'
+        lessons:
+          type: array
+          description: Alle Lektionen
+          items:
+            $ref: '#/components/schemas/Lesson'
+        vocabulary:
+          type: array
+          description: Alle Vokabeln
+          items:
+            $ref: '#/components/schemas/VocabEntry'
+        stats:
+          type: object
+          description: Statistiken zum Backup
+          properties:
+            lessonsCount:
+              type: integer
+              example: 7
+            vocabularyCount:
+              type: integer
+              example: 46
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Fehlerbeschreibung
+          example: Ungültige Eingabe

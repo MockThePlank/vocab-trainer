@@ -10,6 +10,7 @@ export default defineConfig({
       input: {
         index: path.resolve(__dirname, 'src/public/index.html'),
         trainer: path.resolve(__dirname, 'src/public/trainer.html'),
+        admin: path.resolve(__dirname, 'src/public/admin.html'),
       }
     }
   },

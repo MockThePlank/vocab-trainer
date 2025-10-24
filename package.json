@@ -3,7 +3,7 @@
   "author": {
     "name": "CodeBeard"
   },
-  "version": "2.1.0",
+  "version": "3.0.0",
   "description": "Ein spielerischer Vokabeltrainer mit Express-Backend und Konfetti.",
   "type": "module",
   "main": "dist/server.js",
