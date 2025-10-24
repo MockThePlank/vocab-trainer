@@ -23,6 +23,27 @@ export function toggleAddForm(): void {
   }
 }
 
+/** Toggle the add lesson form visibility */
+export function toggleAddLessonForm(): void {
+  const form = document.getElementById('addLessonForm');
+  const toggle = document.getElementById('addLessonToggle');
+  if (!form || !toggle) return;
+
+  if (form.classList.contains('form-hidden')) {
+    form.classList.remove('form-hidden');
+    form.classList.add('form-visible');
+    (toggle as HTMLElement).style.background = '#00aaff';
+    (toggle as HTMLElement).style.color = 'white';
+    (toggle as HTMLElement).style.borderColor = '#0088cc';
+  } else {
+    form.classList.remove('form-visible');
+    form.classList.add('form-hidden');
+    (toggle as HTMLElement).style.background = '#f0f9ff';
+    (toggle as HTMLElement).style.color = 'inherit';
+    (toggle as HTMLElement).style.borderColor = '#a3d3ff';
+  }
+}
+
 /** Handle add vocab form submit */
 export async function handleFormSubmit(e: Event): Promise<void> {
   e.preventDefault();
@@ -63,5 +84,44 @@ export async function handleFormSubmit(e: Event): Promise<void> {
   } catch (err) {
     console.error('Fehler beim Hinzufügen:', err);
     showToast('❌ Fehler beim Speichern', 'error');
+  }
+}
+
+/** Handle add lesson form submit */
+export async function handleLessonFormSubmit(e: Event): Promise<void> {
+  e.preventDefault();
+
+  const fileInput = document.getElementById('lessonFile') as HTMLInputElement | null;
+  if (!fileInput) return;
+
+  const formData = new FormData();
+  
+  // Optional: Add file if selected
+  if (fileInput.files && fileInput.files.length > 0) {
+    formData.append('file', fileInput.files[0]);
+  }
+
+  try {
+    const response = await fetch('/api/lessons', {
+      method: 'POST',
+      body: formData,
+    });
+
+    const result = await response.json();
+
+    if (response.ok && result.success) {
+      showToast(`✅ Neue Lektion erstellt: ${result.lesson.slug}`, 'success');
+      fileInput.value = '';
+      
+      // Refresh lesson list and switch to new lesson
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('lesson:added', { detail: result.lesson }));
+      }, 1500);
+    } else {
+      showToast('⚠️ ' + (result.error || 'Fehler beim Erstellen der Lektion'), 'error');
+    }
+  } catch (err) {
+    console.error('Fehler beim Erstellen der Lektion:', err);
+    showToast('❌ Fehler beim Erstellen der Lektion', 'error');
   }
 }

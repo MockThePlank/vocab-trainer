@@ -59,7 +59,8 @@ h1 {
 }
 
 /* Ausklappbares Formular im Toolbar */
-#addVocabContainer {
+#addVocabContainer,
+#addLessonContainer {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -68,7 +69,8 @@ h1 {
   position: relative;
 }
 
-#addVocabToggle {
+#addVocabToggle,
+#addLessonToggle {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -84,18 +86,21 @@ h1 {
   user-select: none;
 }
 
-#addVocabToggle:hover {
+#addVocabToggle:hover,
+#addLessonToggle:hover {
   background: #e0f4ff;
   border-color: #00aaff;
   transform: translateY(-1px);
   box-shadow: 0 2px 4px rgba(0, 170, 255, 0.2);
 }
 
-#addVocabToggle:active {
+#addVocabToggle:active,
+#addLessonToggle:active {
   transform: translateY(0);
 }
 
-#addForm {
+#addForm,
+#addLessonForm {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -106,13 +111,15 @@ h1 {
   margin-left: 0;
 }
 
-#addForm.form-visible {
+#addForm.form-visible,
+#addLessonForm.form-visible {
   max-width: 500px;
   opacity: 1;
   margin-left: 10px;
 }
 
-#addForm.form-hidden {
+#addForm.form-hidden,
+#addLessonForm.form-hidden {
   max-width: 0;
   opacity: 0;
   margin-left: 0;
@@ -128,13 +135,25 @@ h1 {
   flex-shrink: 0;
 }
 
-#addForm input[type="text"]:focus {
+#addLessonForm input[type="file"] {
+  padding: 8px 12px;
+  border: 2px solid #a3d3ff;
+  border-radius: 5px;
+  font-size: 0.95em;
+  transition: border-color 0.2s;
+  flex-shrink: 0;
+  background: white;
+}
+
+#addForm input[type="text"]:focus,
+#addLessonForm input[type="file"]:focus {
   outline: none;
   border-color: #00aaff;
   box-shadow: 0 0 0 3px rgba(0, 170, 255, 0.1);
 }
 
-#addForm button {
+#addForm button,
+#addLessonForm button {
   padding: 8px 16px;
   border: none;
   background-color: #00aaff;
@@ -148,7 +167,8 @@ h1 {
   flex-shrink: 0;
 }
 
-#addForm button:hover {
+#addForm button:hover,
+#addLessonForm button:hover {
   background-color: #0088cc;
 }
 

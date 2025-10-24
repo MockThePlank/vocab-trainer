@@ -5,17 +5,17 @@
 
 import { Router, Request, Response } from 'express';
 import { dbService } from '../services/db.service.js';
-import { ApiResponse, VALID_LESSONS, Lesson } from '../types/index.js';
+import { ApiResponse } from '../types/index.js';
 
 const router = Router();
 
 /**
- * Type guard to validate lesson identifiers
+ * Validates lesson identifier format (lesson01-lesson99)
  * @param lesson - String to validate
- * @returns True if lesson is a valid lesson identifier
+ * @returns True if lesson matches the pattern lessonXX where XX is 01-99
  */
-function isValidLesson(lesson: string): lesson is Lesson {
-  return VALID_LESSONS.includes(lesson as Lesson);
+function isValidLessonFormat(lesson: string): boolean {
+  return /^lesson(0[1-9]|[1-9][0-9])$/.test(lesson);
 }
 
 /**
@@ -31,7 +31,7 @@ function isValidLesson(lesson: string): lesson is Lesson {
 router.get('/:lesson', async (req: Request, res: Response) => {
   const lesson = req.params.lesson;
 
-  if (!isValidLesson(lesson)) {
+  if (!isValidLessonFormat(lesson)) {
     return res.status(400).json({ error: 'Ungültige Lesson' });
   }
 
@@ -59,7 +59,7 @@ router.post('/:lesson', async (req: Request, res: Response<ApiResponse>) => {
   const { de, en } = req.body as { de: string; en: string };
   const lesson = req.params.lesson;
 
-  if (!isValidLesson(lesson)) {
+  if (!isValidLessonFormat(lesson)) {
     return res.status(400).json({ error: 'Ungültige Lesson' });
   }
 

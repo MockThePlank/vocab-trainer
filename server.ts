@@ -7,6 +7,7 @@ import helmet from 'helmet';
 import dotenv from 'dotenv';
 import vocabRoutes from './src/routes/vocab.routes.js';
 import adminRoutes from './src/routes/admin.routes.js';
+import lessonsRoutes from './src/routes/lessons.routes.js';
 import { dbService } from './src/services/db.service.js';
 import { ensureDbInitialized } from './src/utils/init-db-runner.js';
 import { ApiResponse } from './src/types/index.js';
@@ -47,16 +48,21 @@ app.use(express.json());
 // CORS aktivieren
 app.use(cors());
 
-// Rate Limiting: 100 Requests pro 15 Minuten pro IP
-const limiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 Minuten
-  max: 100, // Limit pro IP
-  skip: (req) => req.path === '/health', // Health Endpoint ausnehmen
-  message: 'Zu viele Requests von dieser IP, bitte später versuchen.',
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-app.use(limiter);
+// Rate Limiting: Nur in Produktion aktivieren
+if (process.env.NODE_ENV === 'production') {
+  const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 Minuten
+    max: 100, // Limit pro IP
+    skip: (req) => req.path === '/health', // Health Endpoint ausnehmen
+    message: 'Zu viele Requests von dieser IP, bitte später versuchen.',
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
+  app.use(limiter);
+  logger.info('Rate limiting enabled (production mode)');
+} else {
+  logger.info('Rate limiting disabled (development mode)');
+}
 
 // HTTPS erzwingen (für Produktion)
 app.use((req: Request, res: Response, next: NextFunction) => {
@@ -70,6 +76,7 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 // Routes
 app.use('/api/vocab', vocabRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/lessons', lessonsRoutes);
 
 // Serve Vite build output (frontend)
 const frontendPath = path.join(__dirname, 'frontend'); // dist/frontend

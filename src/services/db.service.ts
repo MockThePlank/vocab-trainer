@@ -45,7 +45,7 @@ class DatabaseService {
    * @returns Promise resolving to array of vocabulary entries
    * @throws Database error if query fails
    */
-  getVocabByLesson(lesson: Lesson): Promise<VocabEntry[]> {
+  getVocabByLesson(lesson: string): Promise<VocabEntry[]> {
     return new Promise((resolve, reject) => {
       if (!this.db) {
         const msg = 'Database is closed';
@@ -76,7 +76,7 @@ class DatabaseService {
    * @returns Promise resolving to the ID of the newly created entry
    * @throws Database error if insert fails
    */
-  addVocab(lesson: Lesson, de: string, en: string): Promise<number> {
+  addVocab(lesson: string, de: string, en: string): Promise<number> {
     return new Promise((resolve, reject) => {
       if (!this.db) return reject(new Error('Database is closed'));
       this.db.run(
