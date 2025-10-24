@@ -7,12 +7,12 @@ import { Router, Request, Response } from 'express';
 import sqlite3 from 'sqlite3';
 import { logger } from '../utils/logger.js';
 import { getDbPath } from '../utils/db-path.js';
-import multer from 'multer';
 import fs from 'fs';
 import { createAutoBackup } from '../utils/auto-backup.js';
 
 const router = Router();
-const upload = multer({ dest: 'tmp/' });
+// multer is imported lazily inside the POST handler so the app can start
+// even if multer is not installed at runtime on the host.
 
 interface LessonData {
   slug: string;
@@ -95,9 +95,28 @@ router.get('/', async (req: Request, res: Response) => {
  * 
  * The lesson number is auto-incremented (lesson01-lesson99)
  */
-router.post('/', upload.single('file'), async (req: Request, res: Response) => {
+router.post('/', async (req: Request, res: Response) => {
   const DB_PATH = getDbPath();
   const db = new sqlite3.Database(DB_PATH);
+
+  // Lazily import multer and run the upload middleware so a missing multer
+  // package does not crash the server at module load time.
+  try {
+    const multerMod = await import('multer');
+    const multer = (multerMod && (multerMod.default ?? multerMod)) as any;
+    const upload = multer({ dest: 'tmp/' });
+    await new Promise<void>((resolve, reject) => {
+      upload.single('file')(req as any, res as any, (err?: unknown) => {
+        if (err) return reject(err);
+        resolve();
+      });
+    });
+  } catch (err) {
+    const errMsg = err instanceof Error ? err.message : String(err);
+    logger.error('multer import or upload middleware failed for lesson creation', { error: errMsg });
+    db.close();
+    return res.status(500).json({ error: 'Server: Datei-Upload nicht verfügbar' });
+  }
 
   try {
     // Find the next available lesson number from lessons table

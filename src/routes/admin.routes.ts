@@ -11,12 +11,13 @@ import { ApiResponse } from '../types/index.js';
 import sqlite3 from 'sqlite3';
 import { getDbPath } from '../utils/db-path.js';
 import { logger } from '../utils/logger.js';
-import multer from 'multer';
 import fs from 'fs/promises';
 import { createAutoBackup } from '../utils/auto-backup.js';
 
 const router = Router();
-const upload = multer({ dest: 'tmp/' });
+// multer is imported lazily inside the route handler so the server
+// can start even if multer is not installed in the runtime environment.
+// This prevents module-load failures on hosts where node_modules may be missing.
 
 /**
  * DELETE /api/admin/vocab/:id
@@ -183,11 +184,31 @@ router.get('/export', requireApiKey, async (req: Request, res: Response) => {
  * @returns {ApiResponse} 401 - Unauthorized (invalid API key)
  * @returns {ApiResponse} 500 - Import failed
  */
-router.post('/import', requireApiKey, upload.single('file'), async (req: Request, res: Response) => {
+router.post('/import', requireApiKey, async (req: Request, res: Response) => {
   const DB_PATH = getDbPath();
   const db = new sqlite3.Database(DB_PATH);
 
   try {
+    // Lazily import multer so a missing package doesn't crash module load.
+    try {
+      const multerMod = await import('multer');
+      // multer may be the default export or the module itself depending on bundler/node resolution
+      const multer = (multerMod && (multerMod.default ?? multerMod)) as any;
+      const upload = multer({ dest: 'tmp/' });
+      // Run the middleware to populate req.file
+      await new Promise<void>((resolve, reject) => {
+        upload.single('file')(req as any, res as any, (err?: unknown) => {
+          if (err) return reject(err);
+          resolve();
+        });
+      });
+    } catch (err) {
+      const errMsg = err instanceof Error ? err.message : String(err);
+      logger.error('multer import or upload middleware failed', { error: errMsg });
+      db.close();
+      return res.status(500).json({ error: 'Server: Datei-Upload nicht verfügbar' });
+    }
+
     if (!(req as any).file) {
       return res.status(400).json({ error: 'Keine Datei hochgeladen' });
     }
