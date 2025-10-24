@@ -99,24 +99,28 @@ router.post('/', async (req: Request, res: Response) => {
   const DB_PATH = getDbPath();
   const db = new sqlite3.Database(DB_PATH);
 
-  // Lazily import multer and run the upload middleware so a missing multer
-  // package does not crash the server at module load time.
-  try {
-    const multerMod = await import('multer');
-    const multer = (multerMod && (multerMod.default ?? multerMod)) as any;
-    const upload = multer({ dest: 'tmp/' });
-    await new Promise<void>((resolve, reject) => {
-      upload.single('file')(req as any, res as any, (err?: unknown) => {
-        if (err) return reject(err);
-        resolve();
-      });
-    });
-  } catch (err) {
-    const errMsg = err instanceof Error ? err.message : String(err);
-    logger.error('multer import or upload middleware failed for lesson creation', { error: errMsg });
-    db.close();
-    return res.status(500).json({ error: 'Server: Datei-Upload nicht verfügbar' });
-  }
+    // Only handle multipart/form-data upload requests with multer. If the
+    // client sends JSON (typical for UI creating an empty lesson), skip multer
+    // so the route works without multer being installed.
+    const contentType = (req.headers['content-type'] || '').toString();
+    if (contentType.includes('multipart/form-data')) {
+      try {
+        const multerMod = await import('multer');
+        const multer = (multerMod && (multerMod.default ?? multerMod)) as any;
+        const upload = multer({ dest: 'tmp/' });
+        await new Promise<void>((resolve, reject) => {
+          upload.single('file')(req as any, res as any, (err?: unknown) => {
+            if (err) return reject(err);
+            resolve();
+          });
+        });
+      } catch (err) {
+        const errMsg = err instanceof Error ? err.message : String(err);
+        logger.error('multer import or upload middleware failed for lesson creation', { error: errMsg });
+        db.close();
+        return res.status(500).json({ error: 'Server: Datei-Upload nicht verfügbar' });
+      }
+    }
 
   try {
     // Find the next available lesson number from lessons table
