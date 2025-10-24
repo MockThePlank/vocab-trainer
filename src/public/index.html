@@ -4,49 +4,49 @@
   <meta charset="utf-8">
   <title>Fias Vokabeltrainer</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='48' fill='%2300aaff'/><text x='50' y='50' text-anchor='middle' dominant-baseline='central' font-size='60'>🐾</text></svg>">
-  <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: system-ui, -apple-system, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    h1 {
+      color: white;
+      font-size: 3rem;
+      margin-bottom: 2rem;
+      text-align: center;
+    }
+    .paw-button {
+      width: 150px;
+      height: 150px;
+      border: none;
+      border-radius: 50%;
+      background: white;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 100px;
+      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    }
+    .paw-button:hover {
+      transform: scale(1.1);
+      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+    }
+    .paw-button:active {
+      transform: scale(0.95);
+    }
+  </style>
 </head>
 <body>
-  <h1>🎓 Finde die passenden Vokabeln!</h1>
-
-  <!-- Toolbar: Lesson-Selector und Vokabel-Formular nebeneinander -->
-  <div id="toolbar">
-    <!-- Lesson-Auswahl -->
-    <div id="lessonSelector">
-      <label for="lessonSelect">📚 Lektion:</label>
-  <select id="lessonSelect">
-        <option value="lesson01">Lektion 1</option>
-        <option value="lesson02">Lektion 2</option>
-        <option value="lesson03">Lektion 3</option>
-        <option value="lesson04">Lektion 4</option>
-      </select>
-    </div>
-
-    <!-- Ausklappbares Formular zum Hinzufügen neuer Vokabeln -->
-    <div id="addVocabContainer">
-  <div id="addVocabToggle">
-        <span>➕ Neues Vokabelpaar</span>
-      </div>
-      <form id="addForm" class="form-hidden">
-        <input type="text" id="de" placeholder="Deutsch" maxlength="60" required>
-        <input type="text" id="en" placeholder="Englisch" maxlength="60" required>
-        <button type="submit">Hinzufügen</button>
-      </form>
-    </div>
-  </div>
-
-  <!-- Spielbereich -->
-  <div id="container">
-    <div id="german" class="column">
-      <h3>🇩🇪 Deutsch</h3>
-    </div>
-    <div id="english" class="column">
-      <h3>🇬🇧 English</h3>
-    </div>
-  </div>
-
-  <canvas id="confetti"></canvas>
-
-  <script type="module" src="/main.ts"></script>
+  <h1>Fias Vokabeltrainer</h1>
+  <button class="paw-button" onclick="window.location.href='/trainer.html'">🐾</button>
 </body>
 </html>

@@ -7,7 +7,10 @@ export default defineConfig({
     outDir: path.resolve(__dirname, 'dist/frontend'), // Frontend in separatem Ordner
     emptyOutDir: true, // löscht nur den Frontend-Ordner
     rollupOptions: {
-      input: path.resolve(__dirname, 'src/public/index.html'),
+      input: {
+        index: path.resolve(__dirname, 'src/public/index.html'),
+        trainer: path.resolve(__dirname, 'src/public/trainer.html'),
+      }
     }
   },
   server: {
