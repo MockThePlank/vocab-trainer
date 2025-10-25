@@ -8,6 +8,7 @@ import sqlite3 from 'sqlite3';
 import { logger } from '../utils/logger.js';
 import { getDbPath } from '../utils/db-path.js';
 import fs from 'fs';
+import path from 'path';
 import { createAutoBackup } from '../utils/auto-backup.js';
 
 const router = Router();
@@ -45,6 +46,19 @@ function formatLessonTitle(slug: string): string {
  */
 router.get('/', async (req: Request, res: Response) => {
   const DB_PATH = getDbPath();
+
+  // Ensure DB directory is writable in production. If the default data
+  // folder inside the project is read-only (common on some hosts), log a
+  // clear error and return a helpful 500 so logs point to the root cause.
+  try {
+    const dbDir = path.dirname(DB_PATH);
+    await fs.promises.access(dbDir, fs.constants.W_OK);
+  } catch (err) {
+    const errMsg = err instanceof Error ? err.message : String(err);
+    logger.error('Database directory not writable', { path: DB_PATH, error: errMsg });
+    return res.status(500).json({ error: 'Server: Datenbankverzeichnis nicht beschreibbar' });
+  }
+
   const db = new sqlite3.Database(DB_PATH);
 
   // Try to read from lessons table first, fall back to vocabulary table

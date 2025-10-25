@@ -4,8 +4,12 @@ services:
     runtime: node
     plan: starter
     branch: main
-    buildCommand: npm run build
-    startCommand: npm run start
+    # Ensure devDependencies (TypeScript/Vite) are installed during the build step
+    # so the project can be compiled on Render. We force a full install for the
+    # build by disabling NPM production mode for the install step.
+    buildCommand: NPM_CONFIG_PRODUCTION=false npm ci && npm run build
+    # Start the compiled server artifact
+    startCommand: node dist/server.js
     healthCheckPath: /health
     envVars:
       - key: NODE_ENV
@@ -13,7 +17,11 @@ services:
       - key: ADMIN_API_KEY
         sync: false  # Must be set manually in Render dashboard for security
       - key: DB_PATH
-        value: /data/vocab.db  
+        value: /data/vocab.db
+      - key: AUTO_BACKUP_DIR
+        value: /data/backups
+      - key: TMPDIR
+        value: /tmp
     autoDeploy: true
     disk:
       name: vocab-data
